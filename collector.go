@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"crypto/tls"
 	"gopkg.in/ldap.v2"
 )
 
@@ -12,7 +13,7 @@ func getLDAPGroups() {
 		log.Fatal(err)
 	}
 
-	l, err := ldap.Dial("tcp", config.URL)
+	l, err := ldap.DialTLS("tcp", config.URL, &tls.Config{ServerName: config.ServerName})
 	if err != nil {
 		log.Fatal(err)
 	}

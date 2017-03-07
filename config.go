@@ -7,6 +7,7 @@ import (
 
 type LDAPConfig struct {
 	URL          string `json:url`
+	ServerName   string `json:servername`
 	User         string `json:user`
 	Password     string `json:password`
 	BaseDN       string `json:basedn`
