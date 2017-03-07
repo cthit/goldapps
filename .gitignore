@@ -1,0 +1,5 @@
+# Configuration files
+ldap.json
+
+# Binary files
+/google-ldap-sync
