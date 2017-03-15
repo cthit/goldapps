@@ -1,34 +1,32 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"log"
-	"crypto/tls"
+
+	"github.com/spf13/viper"
 	"gopkg.in/ldap.v2"
 )
 
 func getLDAPGroups() {
-	config, err := readLDAPConfig("ldap.json")
-	if err != nil {
-		log.Fatal(err)
-	}
 
-	l, err := ldap.DialTLS("tcp", config.URL, &tls.Config{ServerName: config.ServerName})
+	l, err := ldap.DialTLS("tcp", viper.GetString("URL"), &tls.Config{ServerName: viper.GetString("ServerName")})
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer l.Close()
 
-	err = l.Bind(config.User, config.Password)
+	err = l.Bind(viper.GetString("User"), viper.GetString("Password"))
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	searchRequest := ldap.NewSearchRequest(
-		config.BaseDN,       // The base dn to search
+		viper.GetString("BaseDN"), // The base dn to search
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		config.Filter,       // The filter to apply
-		config.Attributes,   // A list attributes to retrieve
+		viper.GetString("Filter"),          // The filter to apply
+		viper.GetStringSlice("Attributes"), // A list attributes to retrieve
 		nil,
 	)
 
