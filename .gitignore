@@ -1,5 +1,5 @@
 # Configuration files
-ldap.json
+config.toml
 
 # Binary files
 /google-ldap-sync

@@ -1,0 +1,10 @@
+[ldap]
+	url = "ldap.example.ex:999"
+	servername = "example.ex"
+	user = "cn=god,dc=example,dc=ex"
+	password = "secret"
+	basedn = "ou=some,ou=groups,dc=example,dc=ex"
+	filter = "(&(objectClass=Group))"
+	attibutes = ["cn"]
+
+[gapps]
