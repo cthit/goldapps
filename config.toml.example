@@ -8,3 +8,5 @@
 	attibutes = ["cn"]
 
 [gapps]
+    servicekeyfile = "gapps.json"
+    adminaccount = "admin@example.com"

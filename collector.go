@@ -17,7 +17,7 @@ func getLDAPGroups() {
 	}
 	defer l.Close()
 
-	err = l.Bind(viper.GetString("ldap.user"), viper.GetString("ldap.assword"))
+	err = l.Bind(viper.GetString("ldap.user"), viper.GetString("ldap.password"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -26,7 +26,7 @@ func getLDAPGroups() {
 		viper.GetString("ldap.basedn"), // The base dn to search
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 		viper.GetString("ldap.filter"),          // The filter to apply
-		viper.GetStringSlice("ldap.Attributes"), // A list attributes to retrieve
+		viper.GetStringSlice("ldap.attributes"), // A list attributes to retrieve
 		nil,
 	)
 
