@@ -1,31 +1,31 @@
 package main
 
 import (
-	"google.golang.org/api/admin/directory/v1"
 	"fmt"
+	"github.com/spf13/viper"
 )
 
-func init()  {
-	loadConfig()
+func init() {
+	err := loadConfig()
+	if err != nil {
+		panic(err)
+	}
 }
 
 func main() {
-	jsonKey, err := getGoogleServiceKey()
+
+	service, err := getGoogleService(viper.GetString("gapps.servicekeyfile"), viper.GetString("gapps.adminaccount"))
+	if err != nil {
+		fmt.Println(viper.GetString("gapps.servicekeyfile"))
+		panic(err)
+	}
+
+	groups, err := service.Groups()
 	if err != nil {
 		panic(err)
 	}
 
-	service, err := getGoogleService(jsonKey, admin.AdminDirectoryGroupScope)
-	if err != nil {
-		panic(err)
-	}
-
-	groups, err := getGroups(service)
-	if err != nil {
-		panic(err)
-	}
-
-	for _, group := range groups.Groups {
+	for _, group := range *groups {
 		fmt.Printf("%v, %v \n", group.Name, group.Email)
 	}
 
