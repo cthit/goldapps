@@ -6,3 +6,6 @@ gapps.json
 
 # Binary files
 /google-ldap-sync
+
+# idea
+.idea

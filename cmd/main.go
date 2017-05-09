@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
-	"github.com/spf13/viper"
+/*"fmt"
+"github.com/spf13/viper"*/
 )
 
 func init() {
@@ -14,20 +14,28 @@ func init() {
 
 func main() {
 
-	service, err := getGoogleService(viper.GetString("gapps.servicekeyfile"), viper.GetString("gapps.adminaccount"))
-	if err != nil {
-		fmt.Println(viper.GetString("gapps.servicekeyfile"))
-		panic(err)
-	}
-
-	groups, err := service.Groups()
+	provider, err := getLDAPService()
 	if err != nil {
 		panic(err)
 	}
 
-	for _, group := range *groups {
-		fmt.Printf("%v, %v \n", group.Name, group.Email)
+	/*consumer, err := getGoogleService()
+	if err != nil {
+
+	}*/
+
+	g, err := provider.Groups()
+	if err != nil {
+		panic(err)
 	}
 
-	//getLDAPGroups()
+	if g != nil {
+
+	}
+	/*
+		err = consumer.UpdateGroups(g)
+		if err != nil {
+
+		}
+	*/
 }

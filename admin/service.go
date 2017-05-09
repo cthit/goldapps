@@ -33,15 +33,15 @@ type GoogleService struct {
 	Service *admin.Service
 }
 
-func (s GoogleService) UpdateGroups(g *[]glsync.Group) error {
+func (s GoogleService) UpdateGroups(g []glsync.Group) error {
 
 	remote, err := s.Groups()
 	if err != nil {
 		return err
 	}
 
-	for _, group := range *remote {
-		if !groupContains(*g, group) {
+	for _, group := range remote {
+		if !groupContains(g, group) {
 			err = s.deleteGroup(group.Email)
 		} else {
 			err = s.updateGroup(&group)
@@ -145,7 +145,7 @@ func (s GoogleService) deleteGroup(Email string) error {
 	return err
 }
 
-func (s GoogleService) Groups() (*[]glsync.Group, error) {
+func (s GoogleService) Groups() ([]glsync.Group, error) {
 	groups, err := s.Service.Groups.List().Customer("my_customer").Do()
 	if err != nil {
 		return nil, err
@@ -187,7 +187,7 @@ func (s GoogleService) Groups() (*[]glsync.Group, error) {
 		uGroups[key] = new
 	}
 
-	return &uGroups, nil
+	return uGroups, nil
 
 }
 
