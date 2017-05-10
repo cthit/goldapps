@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/spf13/viper"
 /*"fmt"
 "github.com/spf13/viper"*/
 )
@@ -14,7 +15,13 @@ func init() {
 
 func main() {
 
-	provider, err := getLDAPService()
+	provider, err := getLDAPService(
+		viper.GetString("ldap.url"),
+		viper.GetString("ldap.servername"),
+		viper.GetString("ldap.user"),
+		viper.GetString("ldap.password"),
+	)
+
 	if err != nil {
 		panic(err)
 	}

@@ -3,9 +3,16 @@
 	servername = "example.ex"
 	user = "cn=god,dc=example,dc=ex"
 	password = "secret"
+
+[ldap.groups]
 	basedn = "ou=some,ou=groups,dc=example,dc=ex"
 	filter = "(&(objectClass=Group))"
-	attibutes = ["cn"]
+	attibutes = ["cn", "displayName", "mail", "member"]
+
+[ldap.users]
+	basedn = "ou=people,dc=example,dc=ex"
+	filter = "(&(objectClass=Group))"
+	attibutes = ["uid", "mail"]
 
 [gapps]
     servicekeyfile = "gapps.json"
