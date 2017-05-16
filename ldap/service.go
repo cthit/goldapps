@@ -3,8 +3,6 @@ package ldap
 import (
 	"crypto/tls"
 
-	"strings"
-
 	glsync "github.com/hulthe/google-ldap-sync"
 	"github.com/spf13/viper"
 	"gopkg.in/ldap.v2"
@@ -53,6 +51,19 @@ func (s ServiceLDAP) users() ([]*ldap.Entry, error) {
 	return result.Entries, nil
 }
 
+func findEntry(ldapEntries []*ldap.Entry, DN string) *ldap.Entry {
+	for _, entry := range ldapEntries {
+		if entry.DN == DN {
+			return entry
+		}
+	}
+	return nil
+}
+
+func dnIsUser(DN string) bool {
+	return len(DN) >= 4 && DN[0:4] == "uid="
+}
+
 func (s ServiceLDAP) Groups() ([]glsync.Group, error) {
 	users, err := s.users()
 	if err != nil {
@@ -68,57 +79,47 @@ func (s ServiceLDAP) Groups() ([]glsync.Group, error) {
 		nil,
 	)
 
-	result, err := s.Connection.Search(searchRequest)
+	committés, err := s.Connection.Search(searchRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	groups := make([]glsync.Group, len(result.Entries))
+	groups := make([]glsync.Group, len(committés.Entries))
 	groupIndex := 0
 
-	for _, entry := range result.Entries {
+	for _, entry := range committés.Entries {
 
-		cn := entry.GetAttributeValue("cn")
-		dn := entry.DN
-
-		if strings.TrimPrefix(dn, "cn="+cn+",") == "ou="+cn+","+baseDN {
-
-			committé := glsync.Group{
-				Name:    entry.GetAttributeValue("displayName"),
-				Email:   entry.GetAttributeValue("mail"),
-				Members: nil,
-				Alias:   nil,
-			}
-
-			members := make([]glsync.Member, len(users))
-			memberIndex := 0
-
-			for _, subCommitté := range entry.GetAttributeValues("member") {
-
-				for _, entry2 := range result.Entries {
-					if subCommitté == entry2.DN {
-						committéMembers := entry2.GetAttributeValues("member")
-
-						for _, member := range committéMembers {
-							for _, user := range users {
-								if user.DN == member {
-									members[memberIndex] = glsync.Member{
-										Email: user.GetAttributeValue("mail"),
-									}
-									memberIndex++
-								}
-							}
-						}
-					}
-				}
-			}
-
-			membersSlice := members[0:memberIndex]
-			committé.Members = &(membersSlice)
-
-			groups[groupIndex] = committé
-			groupIndex++
+		committé := glsync.Group{
+			Name:    entry.GetAttributeValue("displayName"),
+			Email:   entry.GetAttributeValue("mail"),
+			Members: nil,
+			Alias:   nil,
 		}
+
+		members := make([]glsync.Member, len(users))
+		memberIndex := 0
+
+		for _, member := range entry.GetAttributeValues("member") {
+
+			var m *ldap.Entry
+
+			if dnIsUser(member) {
+				m = findEntry(users, member)
+			} else {
+				m = findEntry(committés.Entries, member)
+			}
+
+			if m != nil {
+				members[memberIndex] = glsync.Member{Email: m.GetAttributeValue("mail")}
+				memberIndex++
+			}
+		}
+
+		membersSlice := members[0:memberIndex]
+		committé.Members = &(membersSlice)
+
+		groups[groupIndex] = committé
+		groupIndex++
 	}
 
 	return groups[0:groupIndex], nil
