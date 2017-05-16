@@ -110,8 +110,11 @@ func (s ServiceLDAP) Groups() ([]glsync.Group, error) {
 			}
 
 			if m != nil {
-				members[memberIndex] = glsync.Member{Email: m.GetAttributeValue("mail")}
-				memberIndex++
+				mail := m.GetAttributeValue("mail")
+				if mail != "" {
+					members[memberIndex] = glsync.Member{Email: mail}
+					memberIndex++
+				}
 			}
 		}
 
