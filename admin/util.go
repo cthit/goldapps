@@ -1,8 +1,8 @@
 package admin
 
-import glsync "github.com/hulthe/google-ldap-sync"
+import "github.com/cthit/goldapps"
 
-func memberContains(s []glsync.Member, e glsync.Member) bool {
+func memberContains(s []goldapps.Member, e goldapps.Member) bool {
 	for _, a := range s {
 		if a.Email == e.Email {
 			return true
@@ -11,7 +11,7 @@ func memberContains(s []glsync.Member, e glsync.Member) bool {
 	return false
 }
 
-func groupContains(s []glsync.Group, e glsync.Group) bool {
+func groupContains(s []goldapps.Group, e goldapps.Group) bool {
 	for _, a := range s {
 		if a.Email == e.Email {
 			return true

@@ -1,4 +1,4 @@
-package google
+package goldapps
 
 type Group struct {
 	Name    string

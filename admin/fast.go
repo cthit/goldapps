@@ -1,12 +1,12 @@
 package admin
 
 import (
-	glsync "github.com/hulthe/google-ldap-sync"
+	"github.com/cthit/goldapps"
 	"google.golang.org/api/admin/directory/v1"
 )
 
 type memberResponse struct {
-	Members *[]glsync.Member
+	Members *[]goldapps.Member
 	Error   error
 }
 
@@ -20,7 +20,7 @@ func (f *futureMembers) Done() bool {
 	return f.done
 }
 
-func (f *futureMembers) Members() (*[]glsync.Member, error) {
+func (f *futureMembers) Members() (*[]goldapps.Member, error) {
 	if f.done == false {
 		f.saved = <-f.incoming
 		f.done = true

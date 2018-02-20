@@ -1,15 +1,15 @@
 package main
 
 import (
-	
-	glsync "github.com/hulthe/google-ldap-sync"
-	"github.com/hulthe/google-ldap-sync/admin"
-	"github.com/hulthe/google-ldap-sync/ioutil"
-	"github.com/hulthe/google-ldap-sync/google"
+
+	"github.com/cthit/goldapps"
+	"github.com/cthit/goldapps/admin"
+	"github.com/cthit/goldapps/ioutil"
+	"github.com/cthit/goldapps/google"
 	"golang.org/x/net/context"
 )
 
-func getGoogleService(keyPath string, adminMail string) (glsync.GroupUpdateService, error) {
+func getGoogleService(keyPath string, adminMail string) (goldapps.GroupUpdateService, error) {
 	
 	jsonKey, err := ioutil.ReadFile(keyPath)
 	if err != nil {

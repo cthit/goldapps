@@ -3,7 +3,7 @@ package admin
 import (
 	"google.golang.org/api/admin/directory/v1"
 
-	glsync "github.com/hulthe/google-ldap-sync"
+	"github.com/cthit/goldapps"
 
 	"math"
 	"net/http"
@@ -33,7 +33,7 @@ type GoogleService struct {
 	Service *admin.Service
 }
 
-func (s GoogleService) UpdateGroups(g []glsync.Group) error {
+func (s GoogleService) UpdateGroups(g []goldapps.Group) error {
 
 	remote, err := s.Groups()
 	if err != nil {
@@ -56,7 +56,7 @@ func (s GoogleService) UpdateGroups(g []glsync.Group) error {
 
 }
 
-func (s GoogleService) updateGroup(g *glsync.Group) error {
+func (s GoogleService) updateGroup(g *goldapps.Group) error {
 	group, err := s.Service.Groups.Get(g.Email).Do()
 	if err != nil {
 		new := &admin.Group{
@@ -90,7 +90,7 @@ func (s GoogleService) updateGroup(g *glsync.Group) error {
 
 }
 
-func (s *GoogleService) updateMembers(g *admin.Group, members *[]glsync.Member) error {
+func (s *GoogleService) updateMembers(g *admin.Group, members *[]goldapps.Member) error {
 	err := s.cleanupMembers(g, members)
 	if err != nil {
 		return err
@@ -99,7 +99,7 @@ func (s *GoogleService) updateMembers(g *admin.Group, members *[]glsync.Member) 
 	return s.pushMembers(g, members)
 }
 
-func (s *GoogleService) cleanupMembers(g *admin.Group, members *[]glsync.Member) error {
+func (s *GoogleService) cleanupMembers(g *admin.Group, members *[]goldapps.Member) error {
 	current, err := s.members(g)
 	if err != nil {
 		return err
@@ -116,11 +116,11 @@ func (s *GoogleService) cleanupMembers(g *admin.Group, members *[]glsync.Member)
 	return nil
 }
 
-func (s *GoogleService) deleteMember(member glsync.Member, g *admin.Group) error {
+func (s *GoogleService) deleteMember(member goldapps.Member, g *admin.Group) error {
 	return s.Service.Members.Delete(g.Email, member.Email).Do()
 }
 
-func (s *GoogleService) pushMembers(g *admin.Group, members *[]glsync.Member) error {
+func (s *GoogleService) pushMembers(g *admin.Group, members *[]goldapps.Member) error {
 	for _, member := range *members {
 		mem, err := s.Service.Members.Get(g.Email, member.Email).Do()
 		if err != nil {
@@ -145,7 +145,7 @@ func (s GoogleService) deleteGroup(Email string) error {
 	return err
 }
 
-func (s GoogleService) Groups() ([]glsync.Group, error) {
+func (s GoogleService) Groups() ([]goldapps.Group, error) {
 	groups, err := s.Service.Groups.List().Customer("my_customer").Do()
 	if err != nil {
 		return nil, err
@@ -168,7 +168,7 @@ func (s GoogleService) Groups() ([]glsync.Group, error) {
 		fGroups[key].Start(&s, group)
 	}
 
-	uGroups := make([]glsync.Group, len(groups.Groups))
+	uGroups := make([]goldapps.Group, len(groups.Groups))
 
 	for key, group := range groups.Groups {
 
@@ -177,7 +177,7 @@ func (s GoogleService) Groups() ([]glsync.Group, error) {
 			return nil, err
 		}
 
-		new := glsync.Group{
+		new := goldapps.Group{
 			Name:    group.Name,
 			Members: members,
 			Email:   group.Email,
@@ -237,7 +237,7 @@ func (s *GoogleService) memberRequest(group *admin.Group, pageToken string) (*ad
 	return members, err
 }
 
-func (s *GoogleService) members(group *admin.Group) (*[]glsync.Member, error) {
+func (s *GoogleService) members(group *admin.Group) (*[]goldapps.Member, error) {
 
 	members, err := s.memberRequest(group, "")
 	if err != nil {
@@ -254,10 +254,10 @@ func (s *GoogleService) members(group *admin.Group) (*[]glsync.Member, error) {
 		members.NextPageToken = newMembers.NextPageToken
 	}
 
-	uMembers := make([]glsync.Member, len(members.Members))
+	uMembers := make([]goldapps.Member, len(members.Members))
 
 	for key, member := range members.Members {
-		new := glsync.Member{
+		new := goldapps.Member{
 			Email: member.Email,
 		}
 

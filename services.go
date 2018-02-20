@@ -1,4 +1,4 @@
-package google
+package goldapps
 
 type GroupUpdateService interface {
 	UpdateGroups([]Group) error

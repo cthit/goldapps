@@ -2,8 +2,7 @@ package main
 
 import (
 	"github.com/spf13/viper"
-/*"fmt"
-"github.com/spf13/viper"*/
+	"fmt"
 )
 
 func init() {
@@ -15,13 +14,14 @@ func init() {
 
 func main() {
 
-	provider, err := getLDAPService(
+	/*provider, err := getLDAPService(
 		viper.GetString("ldap.url"),
 		viper.GetString("ldap.servername"),
 		viper.GetString("ldap.user"),
 		viper.GetString("ldap.password"),
-	)
+	)*/
 
+	provider, err := getGoogleService(viper.GetString("gapps.servicekeyfile"), viper.GetString("gapps.adminaccount"))
 	if err != nil {
 		panic(err)
 	}
@@ -37,7 +37,7 @@ func main() {
 	}
 
 	if g != nil {
-
+		fmt.Print(g)
 	}
 	/*
 		err = consumer.UpdateGroups(g)

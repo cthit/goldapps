@@ -3,7 +3,7 @@ package ldap
 import (
 	"crypto/tls"
 
-	glsync "github.com/hulthe/google-ldap-sync"
+	"github.com/cthit/goldapps"
 	"github.com/spf13/viper"
 	"gopkg.in/ldap.v2"
 )
@@ -64,7 +64,7 @@ func dnIsUser(DN string) bool {
 	return len(DN) >= 4 && DN[0:4] == "uid="
 }
 
-func (s ServiceLDAP) Groups() ([]glsync.Group, error) {
+func (s ServiceLDAP) Groups() ([]goldapps.Group, error) {
 	users, err := s.users()
 	if err != nil {
 		return nil, err
@@ -84,19 +84,19 @@ func (s ServiceLDAP) Groups() ([]glsync.Group, error) {
 		return nil, err
 	}
 
-	groups := make([]glsync.Group, len(committés.Entries))
+	groups := make([]goldapps.Group, len(committés.Entries))
 	groupIndex := 0
 
 	for _, entry := range committés.Entries {
 
-		committé := glsync.Group{
+		committé := goldapps.Group{
 			Name:    entry.GetAttributeValue("displayName"),
 			Email:   entry.GetAttributeValue("mail"),
 			Members: nil,
 			Alias:   nil,
 		}
 
-		members := make([]glsync.Member, len(users))
+		members := make([]goldapps.Member, len(users))
 		memberIndex := 0
 
 		for _, member := range entry.GetAttributeValues("member") {
@@ -112,7 +112,7 @@ func (s ServiceLDAP) Groups() ([]glsync.Group, error) {
 			if m != nil {
 				mail := m.GetAttributeValue("mail")
 				if mail != "" {
-					members[memberIndex] = glsync.Member{Email: mail}
+					members[memberIndex] = goldapps.Member{Email: mail}
 					memberIndex++
 				}
 			}

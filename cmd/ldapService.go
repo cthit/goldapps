@@ -1,11 +1,11 @@
 package main
 
 import (
-	glsync "github.com/hulthe/google-ldap-sync"
-	"github.com/hulthe/google-ldap-sync/ldap"
+	"github.com/cthit/goldapps"
+	"github.com/cthit/goldapps/ldap"
 )
 
-func getLDAPService(url string, serverName string, userName string, password string) (glsync.GroupService, error) {
+func getLDAPService(url string, serverName string, userName string, password string) (goldapps.GroupService, error) {
 
 	service, err := ldap.NewLDAPService(url, serverName, userName, password)
 	if err != nil {
