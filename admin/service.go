@@ -10,6 +10,10 @@ import (
 	"time"
 )
 
+type GoogleService struct {
+	Service *admin.Service
+}
+
 type ServiceConfig interface {
 	GoogleServiceJSONKeyPath() string
 	GoogleServiceAdmin() string
@@ -29,59 +33,80 @@ func NewGoogleService(client *http.Client) (*GoogleService, error) {
 	return gs, nil
 }
 
-type GoogleService struct {
-	Service *admin.Service
-}
+func (s GoogleService) UpdateGroups(groups []goldapps.Group) error {
 
-func (s GoogleService) UpdateGroups(g []goldapps.Group) error {
-
-	remote, err := s.Groups()
+	// Grab remote groups
+	remoteGroups, err := s.Groups()
 	if err != nil {
 		return err
 	}
 
-	for _, group := range remote {
-		if !groupContains(g, group) {
-			err = s.deleteGroup(group.Email)
-		} else {
-			err = s.updateGroup(&group)
+	// Remove obselate remote groups
+	for _, remoteGroup := range remoteGroups {
+		if !groupContains(groups, remoteGroup) {
+			err = s.deleteGroup(remoteGroup.Email)
+			if err != nil {
+				return err
+			}
 		}
+	}
 
-		if err != nil {
-			return err
-		}
+	// Update local groups
+	for _, group := range groups {
+
 	}
 
 	return nil
 
 }
 
-func (s GoogleService) updateGroup(g *goldapps.Group) error {
-	group, err := s.Service.Groups.Get(g.Email).Do()
-	if err != nil {
-		new := &admin.Group{
+func (s GoogleService) getGroup(email string) (admin.Group, error)  {
+	group, err := s.Service.Groups.Get(email).Do()
+
+	return *group, err
+}
+
+func (s GoogleService) insertGroup(group admin.Group) (error) {
+	_, err := s.Service.Groups.Insert(&group).Do()
+	return err
+}
+
+func (s GoogleService) updateSingleGroup(group admin.Group) (error) {
+	_, err := s.Service.Groups.Update(group.Email, &group).Do()
+	return err
+}
+
+func (s GoogleService) updateGroup(g goldapps.Group) error {
+	// Retrieves the group with the specified email
+	group, err := s.getGroup(g.Email)
+	if err != nil { // TODO: Should probably check for more specific error
+		// Assumes that the retrieval failed because the group doesn't exist.
+		// Creates a new group.
+		new := admin.Group{
 			Name:    g.Name,
 			Email:   g.Email,
 			Aliases: *g.Alias,
 		}
 
-		group, err = s.Service.Groups.Insert(new).Do()
+		// Inserts the new group
+		err := s.insertGroup(new)
 		if err != nil {
 			return err
 		}
 
-	} else {
+	} else { // The group already exist so update it
 		group.Email = g.Email
 		group.Name = g.Name
 		group.Aliases = *g.Alias
 
-		group, err = s.Service.Groups.Update(group.Email, group).Do()
+		err = s.updateSingleGroup(group)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = s.updateMembers(group, g.Members)
+	// The members all need to be updated
+	err = s.updateMembers(&group, g.Members)
 	if err != nil {
 		return err
 	}
