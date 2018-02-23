@@ -48,15 +48,47 @@ func (actions Actions) Commit(service GroupUpdateService) (Actions, error) {
 	return performedActions, nil
 }
 
-func ActionsRequired(from []Group, to []Group) (Actions) {
+
+// Determines actions required to make the "old" group list look as the "new" group list.
+// Returns a list with those actions.
+func ActionsRequired(old []Group, new []Group) (Actions) {
 	requiredActions := Actions{}
 
-	
+	for _, newGroup := range new {
 
-	for _,toGroup := range to {
-		for ; ;  {
-			
+		exists := false
+		for _, oldGroup := range old {
+			if newGroup.Email == oldGroup.Email {
+				exists = true
+				if !newGroup.equals(oldGroup) { // Group exists but is modified
+					requiredActions.Updates = append(requiredActions.Updates, GroupUpdate{
+						Before: oldGroup,
+						After:  newGroup,
+					})
+				}
+				break
+			}
 		}
+
+		if !exists { // Group does not exist in old list
+			requiredActions.Additions = append(requiredActions.Additions, newGroup)
+		}
+	}
+
+	for _, oldGroup := range old {
+
+		exists := false
+		for _, newGroup := range new {
+			if oldGroup.Email == newGroup.Email {
+				exists = true
+				break
+			}
+		}
+
+		if !exists { // Old list has group but the new list doesn't
+			requiredActions.Deletions = append(requiredActions.Deletions, oldGroup)
+		}
+
 	}
 
 
