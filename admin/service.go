@@ -1,13 +1,16 @@
 package admin
 
 import (
-	"google.golang.org/api/admin/directory/v1"
-
 	"github.com/cthit/goldapps"
 
+	"google.golang.org/api/admin/directory/v1" // Imports as admin
+
 	"math"
-	"net/http"
 	"time"
+	"io/ioutil"
+
+	"golang.org/x/oauth2/google"
+	"golang.org/x/net/context"
 )
 
 type GoogleService struct {
@@ -19,7 +22,24 @@ type ServiceConfig interface {
 	GoogleServiceAdmin() string
 }
 
-func NewGoogleService(client *http.Client) (*GoogleService, error) {
+func NewGoogleService(keyPath string, adminMail string) (*GoogleService, error) {
+
+	jsonKey, err := ioutil.ReadFile(keyPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Parse jsonKey
+	config, err := google.JWTConfigFromJSON(jsonKey, Scopes()...)
+	if err != nil {
+		return nil, err
+	}
+
+	// Why do I need this??
+	config.Subject = adminMail
+
+	// Create a http client
+	client := config.Client(context.Background())
 
 	service, err := admin.New(client)
 	if err != nil {
@@ -33,89 +53,25 @@ func NewGoogleService(client *http.Client) (*GoogleService, error) {
 	return gs, nil
 }
 
-func (s GoogleService) UpdateGroups(groups []goldapps.Group) error {
-
-	// Grab remote groups
-	remoteGroups, err := s.Groups()
-	if err != nil {
-		return err
-	}
-
-	// Remove obselate remote groups
-	for _, remoteGroup := range remoteGroups {
-		if !groupContains(groups, remoteGroup) {
-			err = s.deleteGroup(remoteGroup.Email)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	// Update local groups
-	for _, group := range groups {
-
-	}
-
-	return nil
-
-}
-
-func (s GoogleService) getGroup(email string) (admin.Group, error)  {
+func (s *GoogleService) getGroup(email string) (admin.Group, error)  {
 	group, err := s.Service.Groups.Get(email).Do()
 
 	return *group, err
 }
 
-func (s GoogleService) insertGroup(group admin.Group) (error) {
+func (s *GoogleService) addGroup(group admin.Group) (error) {
 	_, err := s.Service.Groups.Insert(&group).Do()
 	return err
 }
 
-func (s GoogleService) updateSingleGroup(group admin.Group) (error) {
+func (s *GoogleService) updateGroup(group admin.Group) (error) {
 	_, err := s.Service.Groups.Update(group.Email, &group).Do()
 	return err
 }
 
-func (s GoogleService) updateGroup(g goldapps.Group) error {
-	// Retrieves the group with the specified email
-	group, err := s.getGroup(g.Email)
-	if err != nil { // TODO: Should probably check for more specific error
-		// Assumes that the retrieval failed because the group doesn't exist.
-		// Creates a new group.
-		new := admin.Group{
-			Name:    g.Name,
-			Email:   g.Email,
-			Aliases: *g.Alias,
-		}
 
-		// Inserts the new group
-		err := s.insertGroup(new)
-		if err != nil {
-			return err
-		}
 
-	} else { // The group already exist so update it
-		group.Email = g.Email
-		group.Name = g.Name
-		group.Aliases = *g.Alias
-
-		err = s.updateSingleGroup(group)
-		if err != nil {
-			return err
-		}
-	}
-
-	// The members all need to be updated
-	err = s.updateMembers(&group, g.Members)
-	if err != nil {
-		return err
-	}
-
-	return nil
-
-}
-
-func (s *GoogleService) updateMembers(g *admin.Group, members *[]goldapps.Member) error {
+func (s *GoogleService) updateMembers(g admin.Group, members []string) error {
 	err := s.cleanupMembers(g, members)
 	if err != nil {
 		return err
@@ -124,14 +80,14 @@ func (s *GoogleService) updateMembers(g *admin.Group, members *[]goldapps.Member
 	return s.pushMembers(g, members)
 }
 
-func (s *GoogleService) cleanupMembers(g *admin.Group, members *[]goldapps.Member) error {
+func (s *GoogleService) cleanupMembers(g admin.Group, members []string) error {
 	current, err := s.members(g)
 	if err != nil {
 		return err
 	}
 
-	for _, cMember := range *current {
-		if !memberContains(*members, cMember) {
+	for _, cMember := range current {
+		if !memberContains(members, cMember) {
 			err = s.deleteMember(cMember, g)
 			if err != nil {
 				return err
@@ -141,23 +97,23 @@ func (s *GoogleService) cleanupMembers(g *admin.Group, members *[]goldapps.Membe
 	return nil
 }
 
-func (s *GoogleService) deleteMember(member goldapps.Member, g *admin.Group) error {
-	return s.Service.Members.Delete(g.Email, member.Email).Do()
+func (s *GoogleService) deleteMember(member string, g admin.Group) error {
+	return s.Service.Members.Delete(g.Email, member).Do()
 }
 
-func (s *GoogleService) pushMembers(g *admin.Group, members *[]goldapps.Member) error {
-	for _, member := range *members {
-		mem, err := s.Service.Members.Get(g.Email, member.Email).Do()
+func (s *GoogleService) pushMembers(g admin.Group, members []string) error {
+	for _, member := range members {
+		mem, err := s.Service.Members.Get(g.Email, member).Do()
 		if err != nil {
 			new := &admin.Member{
-				Email: member.Email,
+				Email: member,
 			}
 			mem, err = s.Service.Members.Insert(g.Email, new).Do()
 			if err != nil {
 				return err
 			}
 		} else {
-			mem.Email = member.Email
+			mem.Email = member
 			mem, err = s.Service.Members.Update(g.Email, mem.Email, mem).Do()
 		}
 	}
@@ -203,10 +159,9 @@ func (s GoogleService) Groups() ([]goldapps.Group, error) {
 		}
 
 		new := goldapps.Group{
-			Name:    group.Name,
-			Members: members,
+			Members: *members,
 			Email:   group.Email,
-			Alias:   &group.Aliases,
+			Aliases: group.Aliases,
 		}
 
 		uGroups[key] = new
@@ -228,7 +183,11 @@ func (s *GoogleService) asyncMembers(g *admin.Group, ret chan memberResponse) {
 
 func (s *GoogleService) delayedMemberRequest(group *admin.Group, pageToken string, delay float64) (*admin.Members, error) {
 
-	time.Sleep(time.Duration(delay))
+	if delay > 1 {
+		time.Sleep(time.Duration(delay))
+	}else{
+		delay = 2
+	}
 
 	var members *admin.Members = nil
 	var err error = nil
@@ -247,22 +206,10 @@ func (s *GoogleService) delayedMemberRequest(group *admin.Group, pageToken strin
 
 func (s *GoogleService) memberRequest(group *admin.Group, pageToken string) (*admin.Members, error) {
 
-	var members *admin.Members = nil
-	var err error = nil
-	if pageToken == "" {
-		members, err = s.Service.Members.List(group.Email).Do()
-	} else {
-		members, err = s.Service.Members.List(group.Email).PageToken(pageToken).Do()
-	}
-	if err != nil {
-		if err.Error() == "googleapi: Error 403: Request rate higher than configured., quotaExceeded" {
-			members, err = s.delayedMemberRequest(group, pageToken, 2)
-		}
-	}
-	return members, err
+	return s.delayedMemberRequest(group, pageToken, 1)
 }
 
-func (s *GoogleService) members(group *admin.Group) (*[]goldapps.Member, error) {
+func (s *GoogleService) members(group *admin.Group) (*[]string, error) {
 
 	members, err := s.memberRequest(group, "")
 	if err != nil {
@@ -279,12 +226,10 @@ func (s *GoogleService) members(group *admin.Group) (*[]goldapps.Member, error) 
 		members.NextPageToken = newMembers.NextPageToken
 	}
 
-	uMembers := make([]goldapps.Member, len(members.Members))
+	uMembers := make([]string, len(members.Members))
 
 	for key, member := range members.Members {
-		new := goldapps.Member{
-			Email: member.Email,
-		}
+		new := member.Email
 
 		uMembers[key] = new
 	}

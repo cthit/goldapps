@@ -2,9 +2,9 @@ package admin
 
 import "github.com/cthit/goldapps"
 
-func memberContains(s []goldapps.Member, e goldapps.Member) bool {
+func memberContains(s []string, e string) bool {
 	for _, a := range s {
-		if a.Email == e.Email {
+		if a == e {
 			return true
 		}
 	}
