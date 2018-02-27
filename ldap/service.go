@@ -4,42 +4,72 @@ import (
 	"crypto/tls"
 
 	"github.com/cthit/goldapps"
-	"github.com/spf13/viper"
 	"gopkg.in/ldap.v2"
 )
 
-func NewLDAPService(url string, serverName string, userName string, password string) (*ServiceLDAP, error) {
+type ServiceLDAP struct {
+	Connection         *ldap.Conn
+	DBConfig           ServerConfig
+	GroupsConfig       EntryConfig
+	UsersConfig        EntryConfig
+	CustomEntryConfigs []CustomEntryConfig
+}
 
-	l, err := ldap.DialTLS("tcp", url, &tls.Config{ServerName: serverName})
+type ServerConfig struct {
+	Url        string
+	ServerName string
+}
+
+type EntryConfig struct {
+	BaseDN     string
+	Filter     string
+	Attributes []string
+}
+
+type CustomEntryConfig struct {
+	BaseDN     string
+	Filter     string
+	Attributes []string
+	Mail       string
+}
+
+type LoginConfig struct {
+	UserName string
+	Password string
+}
+
+func NewLDAPService(dbConfig ServerConfig, login LoginConfig, usersConfig EntryConfig, groupsConfig EntryConfig, customEntryConfigs []CustomEntryConfig) (*ServiceLDAP, error) {
+
+	l, err := ldap.DialTLS("tcp", dbConfig.Url, &tls.Config{ServerName: dbConfig.ServerName})
 	if err != nil {
 		return nil, err
 	}
 	// FIXME: Close connection on garbage collection
 	//defer l.Close()
 
-	err = l.Bind(userName, password)
+	err = l.Bind(login.UserName, login.Password)
 	if err != nil {
 		return nil, err
 	}
 
 	ld := &ServiceLDAP{
-		Connection: l,
+		Connection:   l,
+		DBConfig:     dbConfig,
+		UsersConfig:  usersConfig,
+		GroupsConfig: groupsConfig,
 	}
 
 	return ld, nil
 
 }
 
-type ServiceLDAP struct {
-	Connection *ldap.Conn
-}
-
+// Collects all users from LDAP as a slice of *ldap.Entry's
 func (s ServiceLDAP) users() ([]*ldap.Entry, error) {
 	searchRequest := ldap.NewSearchRequest(
-		viper.GetString("ldap.users.basedn"), // The base dn to search
+		s.UsersConfig.BaseDN, // The base dn to search
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		viper.GetString("ldap.users.filter"),          // The filter to apply
-		viper.GetStringSlice("ldap.users.attributes"), // A list attributes to retrieve
+		s.UsersConfig.Filter,     // The filter to apply
+		s.UsersConfig.Attributes, // A list attributes to retrieve
 		nil,
 	)
 
@@ -49,6 +79,95 @@ func (s ServiceLDAP) users() ([]*ldap.Entry, error) {
 	}
 
 	return result.Entries, nil
+}
+
+// Collects all committees from LDAP and then creates a
+// goldapps.Group slice.
+func (s ServiceLDAP) GetGroups() ([]goldapps.Group, error) {
+	users, err := s.users()
+	if err != nil {
+		return nil, err
+	}
+
+	// Creates a search request to collect all committees from LDAP
+	searchRequest := ldap.NewSearchRequest(
+		s.GroupsConfig.BaseDN, // The base dn to search
+		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+		s.GroupsConfig.Filter,     // The filter to apply
+		s.GroupsConfig.Attributes, // A list attributes to retrieve
+		nil,
+	)
+
+	// Collects the committee entries
+	committees, err := s.Connection.Search(searchRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	// Creates an empty goldapps.Group slice
+	groups := make([]goldapps.Group, len(committees.Entries))
+	groupIndex := 0
+
+	// Creates a goldapps.Group with appropriate mails and members
+	for _, entry := range committees.Entries {
+
+		// Creates a goldapps.Group with it's mail
+		committee := goldapps.Group{
+			Email:   entry.GetAttributeValue("mail"),
+			Members: nil,
+		}
+
+		// Creates an empty members slice
+		members := make([]string, len(users)) // len(users) might break if we have all users and some groups in the members field
+		memberIndex := 0
+
+		// Fills the members slice with data
+		for _, member := range entry.GetAttributeValues("member") {
+			var m *ldap.Entry
+
+			if dnIsUser(member) {
+				m = findEntry(users, member)
+			} else {
+				m = findEntry(committees.Entries, member)
+			}
+
+			if m != nil {
+				mail := m.GetAttributeValue("mail")
+				if mail != "" {
+					members[memberIndex] = mail
+					memberIndex++
+				}
+			}
+		}
+
+		membersSlice := members[0:memberIndex]
+		committee.Members = membersSlice
+
+		groups[groupIndex] = committee
+		groupIndex++
+	}
+
+	return groups[0:groupIndex], nil
+}
+
+
+// WIP
+func (s ServiceLDAP) GetCustomGroups() ([]goldapps.Group, error) {
+	users, err := s.users()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, entry := range s.CustomEntryConfigs {
+		// Creates a search request to collect all committees from LDAP
+		searchRequest := ldap.NewSearchRequest(
+			entry.BaseDN, // The base dn to search
+			ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+			entry.Filter,     // The filter to apply
+			entry.Attributes, // A list attributes to retrieve
+			nil,
+		)
+	}
 }
 
 func findEntry(ldapEntries []*ldap.Entry, DN string) *ldap.Entry {
@@ -62,68 +181,4 @@ func findEntry(ldapEntries []*ldap.Entry, DN string) *ldap.Entry {
 
 func dnIsUser(DN string) bool {
 	return len(DN) >= 4 && DN[0:4] == "uid="
-}
-
-func (s ServiceLDAP) Groups() ([]goldapps.Group, error) {
-	users, err := s.users()
-	if err != nil {
-		return nil, err
-	}
-
-	baseDN := viper.GetString("ldap.groups.basedn")
-	searchRequest := ldap.NewSearchRequest(
-		baseDN, // The base dn to search
-		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		viper.GetString("ldap.groups.filter"),          // The filter to apply
-		viper.GetStringSlice("ldap.groups.attributes"), // A list attributes to retrieve
-		nil,
-	)
-
-	committés, err := s.Connection.Search(searchRequest)
-	if err != nil {
-		return nil, err
-	}
-
-	groups := make([]goldapps.Group, len(committés.Entries))
-	groupIndex := 0
-
-	for _, entry := range committés.Entries {
-
-		committé := goldapps.Group{
-			Name:    entry.GetAttributeValue("displayName"),
-			Email:   entry.GetAttributeValue("mail"),
-			Members: nil,
-			Alias:   nil,
-		}
-
-		members := make([]goldapps.Member, len(users))
-		memberIndex := 0
-
-		for _, member := range entry.GetAttributeValues("member") {
-
-			var m *ldap.Entry
-
-			if dnIsUser(member) {
-				m = findEntry(users, member)
-			} else {
-				m = findEntry(committés.Entries, member)
-			}
-
-			if m != nil {
-				mail := m.GetAttributeValue("mail")
-				if mail != "" {
-					members[memberIndex] = goldapps.Member{Email: mail}
-					memberIndex++
-				}
-			}
-		}
-
-		membersSlice := members[0:memberIndex]
-		committé.Members = &(membersSlice)
-
-		groups[groupIndex] = committé
-		groupIndex++
-	}
-
-	return groups[0:groupIndex], nil
 }
