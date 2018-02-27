@@ -50,9 +50,7 @@ func (s GoogleService) DeleteGroup(group goldapps.Group) (error) {
 }
 
 func (s GoogleService) UpdateGroup(groupUpdate goldapps.GroupUpdate) (error) {
-	// Todo Alias not working
 	new := admin.Group{
-		Aliases: groupUpdate.After.Aliases,
 		Email: groupUpdate.Before.Email,
 	}
 
@@ -66,10 +64,7 @@ func (s GoogleService) UpdateGroup(groupUpdate goldapps.GroupUpdate) (error) {
 			}
 		}
 		if !exists {
-			newMember := admin.Member{
-				Email:member,
-			}
-			err := s.addMember(groupUpdate.Before.Email, newMember)
+			err := s.addMember(groupUpdate.Before.Email, member)
 			if err != nil {
 				return err
 			}
@@ -93,14 +88,46 @@ func (s GoogleService) UpdateGroup(groupUpdate goldapps.GroupUpdate) (error) {
 		}
 	}
 
+	// Add all new aliases
+	for _,alias := range groupUpdate.After.Aliases {
+		exists := false
+		for _,existingAlias := range groupUpdate.Before.Aliases {
+			if alias == existingAlias {
+				exists = true
+				break
+			}
+		}
+		if !exists {
+			err := s.addAlias(groupUpdate.Before.Email, alias)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// Remove all old aliases
+	for _,existingAlias := range groupUpdate.Before.Aliases {
+		keep := false
+		for _,alias := range groupUpdate.After.Aliases {
+			if existingAlias == alias {
+				keep = true
+				break
+			}
+		}
+		if !keep {
+			err := s.deleteAlias(groupUpdate.Before.Email, existingAlias)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	return s.updateGroup(new)
 }
 
 func (s GoogleService) AddGroup(group goldapps.Group) (error) {
-	// Todo Alias not working
 	new := admin.Group{
 		Email:   group.Email,
-		Aliases: group.Aliases,
 	}
 
 	err := s.addGroup(new)
@@ -110,15 +137,19 @@ func (s GoogleService) AddGroup(group goldapps.Group) (error) {
 
 	// Add members
 	for _, member := range group.Members {
-		newMember := admin.Member{
-			Email: member,
-		}
-		err = s.addMember(group.Email, newMember)
+		err = s.addMember(group.Email, member)
 		if err != nil {
 			return err
 		}
 	}
 
+	// Add Aliases
+	for _, alias := range group.Aliases {
+		err = s.addAlias(group.Email, alias)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -151,8 +182,17 @@ func (s GoogleService) deleteMember(groupEmail string, member string, ) error {
 	return s.service.Members.Delete(groupEmail, member).Do()
 }
 
-func (s GoogleService) addMember(groupEmail string, member admin.Member) error {
-	_, err := s.service.Members.Insert(groupEmail, &member).Do()
+func (s GoogleService) addMember(groupEmail string, memberEmail string) error {
+	_, err := s.service.Members.Insert(groupEmail, &admin.Member{Email:memberEmail}).Do()
+	return err
+}
+
+func (s GoogleService) deleteAlias(groupEmail string, alias string, ) error {
+	return s.service.Groups.Aliases.Delete(groupEmail, alias).Do()
+}
+
+func (s GoogleService) addAlias(groupEmail string, alias string) error {
+	_, err := s.service.Groups.Aliases.Insert(groupEmail, &admin.Alias{Alias:alias}).Do()
 	return err
 }
 
