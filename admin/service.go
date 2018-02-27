@@ -122,6 +122,10 @@ func (s GoogleService) AddGroup(group goldapps.Group) (error) {
 	return nil
 }
 
+func (s GoogleService) GetGroups() ([]goldapps.Group, error) {
+	panic("Not implemented!")
+}
+
 func (s GoogleService) getGroup(email string) (admin.Group, error)  {
 	group, err := s.service.Groups.Get(email).Do()
 
