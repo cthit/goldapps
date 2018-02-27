@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/spf13/viper"
 	"fmt"
+	"github.com/cthit/goldapps/ldap"
 )
 
 func init() {
@@ -14,24 +15,62 @@ func init() {
 
 func main() {
 
-	/*provider, err := getLDAPService(
-		viper.GetString("ldap.url"),
-		viper.GetString("ldap.servername"),
-		viper.GetString("ldap.user"),
-		viper.GetString("ldap.password"),
-	)*/
 
-	provider, err := getGoogleService(viper.GetString("gapps.servicekeyfile"), viper.GetString("gapps.adminaccount"))
+
+	/*provider, err := getGoogleService(viper.GetString("gapps.servicekeyfile"), viper.GetString("gapps.adminaccount"))
 	if err != nil {
 		panic(err)
-	}
+	}*/
 
 	/*consumer, err := getGoogleService()
 	if err != nil {
 
 	}*/
 
-	g, err := provider.Groups()
+
+	dbConfig := ldap.ServerConfig {
+		Url: viper.GetString("ldap.url"),
+		ServerName: viper.GetString("ldap.servername"),
+	}
+
+	groupsConfig := ldap.EntryConfig{
+		BaseDN: viper.GetString("ldap.groups.basedn"),
+		Filter: viper.GetString("ldap.groups.filter"),
+		Attributes: viper.GetStringSlice("ldap.groups.attributes"),
+	}
+
+	usersConfig := ldap.EntryConfig{
+		BaseDN: viper.GetString("ldap.users.basedn"),
+		Filter: viper.GetString("ldap.users.filter"),
+		Attributes: viper.GetStringSlice("ldap.users.attributes"),
+	}
+
+	// Add custom entries
+	customEntryNames := viper.GetStringSlice("ldap.custom")
+	customEntryConfigs := make([]ldap.CustomEntryConfig, len(customEntryNames))
+	for _, entry := range customEntryNames {
+		customEntryConfigs = append(customEntryConfigs,
+			ldap.CustomEntryConfig{
+				BaseDN: viper.GetString("ldap." + entry + ".basedn"),
+				Filter: viper.GetString("ldap." + entry + ".filter"),
+				Attributes: viper.GetStringSlice("ldap." + entry + ".attributes"),
+				Mail: viper.GetString("ldap." + entry + ".mail"),
+			},
+		)
+	}
+
+	loginConfig := ldap.LoginConfig {
+		UserName: viper.GetString("ldap.user"),
+		Password: viper.GetString("ldap.password"),
+	}
+
+	provider, err := ldap.NewLDAPService(dbConfig, loginConfig, usersConfig, groupsConfig)
+
+	if err != nil {
+		panic(err)
+	}
+
+	g, err := provider.GetGroups()
 	if err != nil {
 		panic(err)
 	}
