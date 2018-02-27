@@ -1,25 +1,17 @@
 package admin
 
 import (
-	"github.com/cthit/goldapps"
-
 	"google.golang.org/api/admin/directory/v1" // Imports as admin
 
-	"math"
-	"time"
 	"io/ioutil"
 
 	"golang.org/x/oauth2/google"
 	"golang.org/x/net/context"
+	"github.com/cthit/goldapps"
 )
 
 type GoogleService struct {
-	Service *admin.Service
-}
-
-type ServiceConfig interface {
-	GoogleServiceJSONKeyPath() string
-	GoogleServiceAdmin() string
+	service *admin.Service
 }
 
 func NewGoogleService(keyPath string, adminMail string) (*GoogleService, error) {
@@ -47,30 +39,130 @@ func NewGoogleService(keyPath string, adminMail string) (*GoogleService, error) 
 	}
 
 	gs := &GoogleService{
-		Service: service,
+		service: service,
 	}
 
 	return gs, nil
 }
 
-func (s *GoogleService) getGroup(email string) (admin.Group, error)  {
-	group, err := s.Service.Groups.Get(email).Do()
+func (s GoogleService) DeleteGroup(group goldapps.Group) (error) {
+	return s.deleteGroup(group.Email)
+}
+
+func (s GoogleService) UpdateGroup(groupUpdate goldapps.GroupUpdate) (error) {
+	// Todo Alias not working
+	new := admin.Group{
+		Aliases: groupUpdate.After.Aliases,
+		Email: groupUpdate.Before.Email,
+	}
+
+	// Add all new members
+	for _,member := range groupUpdate.After.Members {
+		exists := false
+		for _,existingMember := range groupUpdate.Before.Members {
+			if member == existingMember {
+				exists = true
+				break
+			}
+		}
+		if !exists {
+			newMember := admin.Member{
+				Email:member,
+			}
+			err := s.addMember(groupUpdate.Before.Email, newMember)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// Remove all old members
+	for _,existingMember := range groupUpdate.Before.Members {
+		keep := false
+		for _,member := range groupUpdate.After.Members {
+			if existingMember == member {
+				keep = true
+				break
+			}
+		}
+		if !keep {
+			err := s.deleteMember(groupUpdate.Before.Email, existingMember)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return s.updateGroup(new)
+}
+
+func (s GoogleService) AddGroup(group goldapps.Group) (error) {
+	// Todo Alias not working
+	new := admin.Group{
+		Email:   group.Email,
+		Aliases: group.Aliases,
+	}
+
+	err := s.addGroup(new)
+	if err != nil {
+		return err
+	}
+
+	// Add members
+	for _, member := range group.Members {
+		newMember := admin.Member{
+			Email: member,
+		}
+		err = s.addMember(group.Email, newMember)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s GoogleService) getGroup(email string) (admin.Group, error)  {
+	group, err := s.service.Groups.Get(email).Do()
 
 	return *group, err
 }
 
-func (s *GoogleService) addGroup(group admin.Group) (error) {
-	_, err := s.Service.Groups.Insert(&group).Do()
+func (s GoogleService) addGroup(group admin.Group) (error) {
+	_, err := s.service.Groups.Insert(&group).Do()
 	return err
 }
 
-func (s *GoogleService) updateGroup(group admin.Group) (error) {
-	_, err := s.Service.Groups.Update(group.Email, &group).Do()
+func (s GoogleService) updateGroup(group admin.Group) (error) {
+	_, err := s.service.Groups.Update(group.Email, &group).Do()
+	return err
+}
+
+func (s GoogleService) deleteGroup(email string) error {
+	err := s.service.Groups.Delete(email).Do()
+	return err
+}
+
+func (s GoogleService) deleteMember(groupEmail string, member string, ) error {
+	return s.service.Members.Delete(groupEmail, member).Do()
+}
+
+func (s GoogleService) addMember(groupEmail string, member admin.Member) error {
+	_, err := s.service.Members.Insert(groupEmail, &member).Do()
 	return err
 }
 
 
 
+/*
+	==============
+	Old code below
+	==============
+
+ */
+
+
+ /*
 func (s *GoogleService) updateMembers(g admin.Group, members []string) error {
 	err := s.cleanupMembers(g, members)
 	if err != nil {
@@ -80,7 +172,8 @@ func (s *GoogleService) updateMembers(g admin.Group, members []string) error {
 	return s.pushMembers(g, members)
 }
 
-func (s *GoogleService) cleanupMembers(g admin.Group, members []string) error {
+
+func (s *GoogleService) cleanupMembers(g *admin.Group, members []string) error {
 	current, err := s.members(g)
 	if err != nil {
 		return err
@@ -97,9 +190,7 @@ func (s *GoogleService) cleanupMembers(g admin.Group, members []string) error {
 	return nil
 }
 
-func (s *GoogleService) deleteMember(member string, g admin.Group) error {
-	return s.Service.Members.Delete(g.Email, member).Do()
-}
+
 
 func (s *GoogleService) pushMembers(g admin.Group, members []string) error {
 	for _, member := range members {
@@ -119,13 +210,10 @@ func (s *GoogleService) pushMembers(g admin.Group, members []string) error {
 	}
 	return nil
 }
+*/
 
-func (s GoogleService) deleteGroup(Email string) error {
-	err := s.Service.Groups.Delete(Email).Do()
 
-	return err
-}
-
+/*
 func (s GoogleService) Groups() ([]goldapps.Group, error) {
 	groups, err := s.Service.Groups.List().Customer("my_customer").Do()
 	if err != nil {
@@ -237,3 +325,5 @@ func (s *GoogleService) members(group *admin.Group) (*[]string, error) {
 	return &uMembers, nil
 
 }
+
+*/
