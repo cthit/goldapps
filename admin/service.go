@@ -8,6 +8,8 @@ import (
 	"golang.org/x/oauth2/google"
 	"golang.org/x/net/context"
 	"github.com/cthit/goldapps"
+	"fmt"
+	"bytes"
 )
 
 type GoogleService struct {
@@ -154,7 +156,84 @@ func (s GoogleService) AddGroup(group goldapps.Group) (error) {
 }
 
 func (s GoogleService) GetGroups() ([]goldapps.Group, error) {
-	panic("Not implemented!")
+
+	adminGroups, err := s.getGroups("my_customer")
+	if err != nil {
+		return nil, err
+	}
+
+	groups := make([]goldapps.Group, len(adminGroups))
+	for i,group := range adminGroups {
+
+		p := (i*100)/len(groups)
+
+		builder := bytes.Buffer{}
+		for i := 0; i < 100; i++ {
+			if i < p {
+				builder.WriteByte('=')
+			}else if i == p {
+				builder.WriteByte('>')
+			}else {
+				builder.WriteByte(' ')
+			}
+
+		}
+
+		fmt.Printf("\rProgress: [%s] %d/%d", builder.String(), i+1, len(groups))
+
+		members, err := s.getMembers(group.Email)
+		if err != nil {
+			return nil, err
+		}
+
+		groups[i] = goldapps.Group{
+			Email: group.Email,
+			Members: members,
+			Aliases: group.Aliases,
+		}
+	}
+	fmt.Printf("\rDone!\n")
+
+	return groups, nil
+
+}
+
+func (s GoogleService) getGroups(customer string) ([]admin.Group, error) {
+	groups, err := s.service.Groups.List().Customer(customer).Do()
+	if err != nil {
+		return nil, err
+	}
+
+	for groups.NextPageToken != "" {
+		newGroups, err := s.service.Groups.List().Customer(customer).PageToken(groups.NextPageToken).Do()
+		if err != nil {
+			return nil, err
+		}
+
+		groups.Groups = append(groups.Groups, newGroups.Groups...)
+		groups.NextPageToken = newGroups.NextPageToken
+	}
+
+	result := make([]admin.Group, len(groups.Groups))
+	for i,group := range groups.Groups {
+		result[i] = *group
+	}
+
+	return result, nil
+}
+
+func (s GoogleService) getMembers(email string) ([]string, error) {
+	members, err := s.service.Members.List(email).Do()
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]string, len(members.Members))
+	for i,member := range members.Members {
+		result[i] = member.Email
+	}
+
+	return result, nil
 }
 
 func (s GoogleService) getGroup(email string) (admin.Group, error)  {
@@ -195,179 +274,3 @@ func (s GoogleService) addAlias(groupEmail string, alias string) error {
 	_, err := s.service.Groups.Aliases.Insert(groupEmail, &admin.Alias{Alias:alias}).Do()
 	return err
 }
-
-
-
-/*
-	==============
-	Old code below
-	==============
-
- */
-
-
- /*
-func (s *GoogleService) updateMembers(g admin.Group, members []string) error {
-	err := s.cleanupMembers(g, members)
-	if err != nil {
-		return err
-	}
-
-	return s.pushMembers(g, members)
-}
-
-
-func (s *GoogleService) cleanupMembers(g *admin.Group, members []string) error {
-	current, err := s.members(g)
-	if err != nil {
-		return err
-	}
-
-	for _, cMember := range current {
-		if !memberContains(members, cMember) {
-			err = s.deleteMember(cMember, g)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-
-
-func (s *GoogleService) pushMembers(g admin.Group, members []string) error {
-	for _, member := range members {
-		mem, err := s.Service.Members.Get(g.Email, member).Do()
-		if err != nil {
-			new := &admin.Member{
-				Email: member,
-			}
-			mem, err = s.Service.Members.Insert(g.Email, new).Do()
-			if err != nil {
-				return err
-			}
-		} else {
-			mem.Email = member
-			mem, err = s.Service.Members.Update(g.Email, mem.Email, mem).Do()
-		}
-	}
-	return nil
-}
-*/
-
-
-/*
-func (s GoogleService) Groups() ([]goldapps.Group, error) {
-	groups, err := s.Service.Groups.List().Customer("my_customer").Do()
-	if err != nil {
-		return nil, err
-	}
-
-	for groups.NextPageToken != "" {
-		newGroups, err := s.Service.Groups.List().Customer("my_customer").PageToken(groups.NextPageToken).Do()
-		if err != nil {
-			return nil, err
-		}
-
-		groups.Groups = append(groups.Groups, newGroups.Groups...)
-		groups.NextPageToken = newGroups.NextPageToken
-	}
-
-	fGroups := make([]futureMembers, len(groups.Groups))
-
-	for key, group := range groups.Groups {
-		fGroups[key] = futureMembers{}
-		fGroups[key].Start(&s, group)
-	}
-
-	uGroups := make([]goldapps.Group, len(groups.Groups))
-
-	for key, group := range groups.Groups {
-
-		members, err := fGroups[key].Members()
-		if err != nil {
-			return nil, err
-		}
-
-		new := goldapps.Group{
-			Members: *members,
-			Email:   group.Email,
-			Aliases: group.Aliases,
-		}
-
-		uGroups[key] = new
-	}
-
-	return uGroups, nil
-
-}
-
-func (s *GoogleService) asyncMembers(g *admin.Group, ret chan memberResponse) {
-	m, err := s.members(g)
-	r := memberResponse{
-		Members: m,
-		Error:   err,
-	}
-
-	ret <- r
-}
-
-func (s *GoogleService) delayedMemberRequest(group *admin.Group, pageToken string, delay float64) (*admin.Members, error) {
-
-	if delay > 1 {
-		time.Sleep(time.Duration(delay))
-	}else{
-		delay = 2
-	}
-
-	var members *admin.Members = nil
-	var err error = nil
-	if pageToken == "" {
-		members, err = s.Service.Members.List(group.Email).Do()
-	} else {
-		members, err = s.Service.Members.List(group.Email).PageToken(pageToken).Do()
-	}
-	if err != nil {
-		if err.Error() == "googleapi: Error 403: Request rate higher than configured., quotaExceeded" {
-			members, err = s.delayedMemberRequest(group, pageToken, math.Pow(delay, 2))
-		}
-	}
-	return members, err
-}
-
-func (s *GoogleService) memberRequest(group *admin.Group, pageToken string) (*admin.Members, error) {
-
-	return s.delayedMemberRequest(group, pageToken, 1)
-}
-
-func (s *GoogleService) members(group *admin.Group) (*[]string, error) {
-
-	members, err := s.memberRequest(group, "")
-	if err != nil {
-		return nil, err
-	}
-
-	for members.NextPageToken != "" {
-		newMembers, err := s.memberRequest(group, members.NextPageToken)
-		if err != nil {
-			return nil, err
-		}
-
-		members.Members = append(members.Members, newMembers.Members...)
-		members.NextPageToken = newMembers.NextPageToken
-	}
-
-	uMembers := make([]string, len(members.Members))
-
-	for key, member := range members.Members {
-		new := member.Email
-
-		uMembers[key] = new
-	}
-
-	return &uMembers, nil
-
-}
-
-*/
