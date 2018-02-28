@@ -57,6 +57,7 @@ func NewLDAPService(dbConfig ServerConfig, login LoginConfig, usersConfig EntryC
 		DBConfig:     dbConfig,
 		UsersConfig:  usersConfig,
 		GroupsConfig: groupsConfig,
+		CustomEntryConfigs: customEntryConfigs,
 	}
 
 	return ld, nil
@@ -105,8 +106,7 @@ func (s ServiceLDAP) GetGroups() ([]goldapps.Group, error) {
 	}
 
 	// Creates an empty goldapps.Group slice
-	groups := make([]goldapps.Group, len(committees.Entries))
-	groupIndex := 0
+	groups := make([]goldapps.Group, 0)
 
 	// Creates a goldapps.Group with appropriate mails and members
 	for _, entry := range committees.Entries {
@@ -118,8 +118,7 @@ func (s ServiceLDAP) GetGroups() ([]goldapps.Group, error) {
 		}
 
 		// Creates an empty members slice
-		members := make([]string, len(users)) // len(users) might break if we have all users and some groups in the members field
-		memberIndex := 0
+		members := make([]string, 0) // len(users) might break if we have all users and some groups in the members field
 
 		// Fills the members slice with data
 		for _, member := range entry.GetAttributeValues("member") {
@@ -134,29 +133,28 @@ func (s ServiceLDAP) GetGroups() ([]goldapps.Group, error) {
 			if m != nil {
 				mail := m.GetAttributeValue("mail")
 				if mail != "" {
-					members[memberIndex] = mail
-					memberIndex++
+					members = append(members, mail)
 				}
 			}
 		}
 
-		membersSlice := members[0:memberIndex]
-		committee.Members = membersSlice
+		committee.Members = members
 
-		groups[groupIndex] = committee
-		groupIndex++
+		groups = append(groups, committee)
 	}
 
-	return groups[0:groupIndex], nil
-}
-
-
-// WIP
-func (s ServiceLDAP) GetCustomGroups() ([]goldapps.Group, error) {
-	users, err := s.users()
+	customGroups, err := s.GetCustomGroups()
 	if err != nil {
 		return nil, err
 	}
+
+	groups = append(groups, customGroups...)
+
+	return groups, nil
+}
+
+func (s ServiceLDAP) GetCustomGroups() ([]goldapps.Group, error) {
+	customGroups := make([]goldapps.Group, 0)
 
 	for _, entry := range s.CustomEntryConfigs {
 		// Creates a search request to collect all committees from LDAP
@@ -167,7 +165,30 @@ func (s ServiceLDAP) GetCustomGroups() ([]goldapps.Group, error) {
 			entry.Attributes, // A list attributes to retrieve
 			nil,
 		)
+
+		result, err := s.Connection.Search(searchRequest)
+		if err != nil {
+			return nil, err
+		}
+
+		members := make([]string, 0) // len(users) might break if we have all users and some groups in the members field
+
+		for _, member := range result.Entries {
+			mail := member.GetAttributeValue("mail")
+			if mail != "" {
+				members = append(members, mail)
+			}
+		}
+
+		group := goldapps.Group{
+			Email:   entry.Mail,
+			Members: members,
+		}
+
+		customGroups = append(customGroups, group)
 	}
+
+	return customGroups, nil
 }
 
 func findEntry(ldapEntries []*ldap.Entry, DN string) *ldap.Entry {

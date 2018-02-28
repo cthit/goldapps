@@ -47,7 +47,7 @@ func main() {
 
 	// Add custom entries
 	customEntryNames := viper.GetStringSlice("ldap.custom")
-	customEntryConfigs := make([]ldap.CustomEntryConfig, len(customEntryNames))
+	customEntryConfigs := make([]ldap.CustomEntryConfig, 0)
 	for _, entry := range customEntryNames {
 		customEntryConfigs = append(customEntryConfigs,
 			ldap.CustomEntryConfig{
@@ -64,7 +64,7 @@ func main() {
 		Password: viper.GetString("ldap.password"),
 	}
 
-	provider, err := ldap.NewLDAPService(dbConfig, loginConfig, usersConfig, groupsConfig)
+	provider, err := ldap.NewLDAPService(dbConfig, loginConfig, usersConfig, groupsConfig, customEntryConfigs)
 
 	if err != nil {
 		panic(err)
@@ -76,7 +76,7 @@ func main() {
 	}
 
 	if g != nil {
-		fmt.Print(g)
+		fmt.Println(g)
 	}
 	/*
 		err = consumer.UpdateGroups(g)
