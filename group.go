@@ -22,8 +22,8 @@ func (group Group) equals(other Group) (bool) {
 				contains = true
 				break
 			}
-			if !contains {return false}
 		}
+		if !contains {return false}
 	}
 
 	for _,alias := range group.Aliases  {
@@ -33,8 +33,8 @@ func (group Group) equals(other Group) (bool) {
 				contains = true
 				break
 			}
-			if !contains {return false}
 		}
+		if !contains {return false}
 	}
 
 	return true
