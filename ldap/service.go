@@ -5,6 +5,7 @@ import (
 
 	"github.com/cthit/goldapps"
 	"gopkg.in/ldap.v2"
+	"strings"
 )
 
 type ServiceLDAP struct {
@@ -27,10 +28,11 @@ type EntryConfig struct {
 }
 
 type CustomEntryConfig struct {
-	BaseDN     string
-	Filter     string
-	Attributes []string
-	Mail       string
+	BaseDN       string
+	Filter       string
+	ParentFilter string
+	Attributes   []string
+	Mail         string
 }
 
 type LoginConfig struct {
@@ -53,10 +55,10 @@ func NewLDAPService(dbConfig ServerConfig, login LoginConfig, usersConfig EntryC
 	}
 
 	ld := &ServiceLDAP{
-		Connection:   l,
-		DBConfig:     dbConfig,
-		UsersConfig:  usersConfig,
-		GroupsConfig: groupsConfig,
+		Connection:         l,
+		DBConfig:           dbConfig,
+		UsersConfig:        usersConfig,
+		GroupsConfig:       groupsConfig,
 		CustomEntryConfigs: customEntryConfigs,
 	}
 
@@ -174,9 +176,39 @@ func (s ServiceLDAP) GetCustomGroups() ([]goldapps.Group, error) {
 		members := make([]string, 0) // len(users) might break if we have all users and some groups in the members field
 
 		for _, member := range result.Entries {
-			mail := member.GetAttributeValue("mail")
-			if mail != "" {
-				members = append(members, mail)
+
+			var parentResult *ldap.SearchResult = nil
+			if entry.ParentFilter != "" {
+				parentSearchRequest := ldap.NewSearchRequest(
+					entry.BaseDN, // The base dn to search
+					ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+					strings.Replace(entry.ParentFilter, "%childRDN%", getRDN(member.DN), -1), // The filter to apply
+					entry.Attributes,                                                         // A list attributes to retrieve
+					nil,
+				)
+
+				parentResult, err = s.Connection.Search(parentSearchRequest)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			// If parent filter exists: check if member has a parent that matches
+			var addMember = parentResult == nil
+			if !addMember {
+				for _, parent := range parentResult.Entries {
+					if dnIsParentOf(parent.DN, member.DN) {
+						addMember = true
+						break
+					}
+				}
+			}
+
+			if addMember {
+				mail := member.GetAttributeValue("mail")
+				if mail != "" {
+					members = append(members, mail)
+				}
 			}
 		}
 
@@ -198,6 +230,14 @@ func findEntry(ldapEntries []*ldap.Entry, DN string) *ldap.Entry {
 		}
 	}
 	return nil
+}
+
+func getRDN(DN string) string {
+	return strings.Split(strings.Split(DN, ",")[0], "=")[1]
+}
+
+func dnIsParentOf(parent string, node string) bool {
+	return len(parent) != len(node) && strings.Contains(node, parent)
 }
 
 func dnIsUser(DN string) bool {
