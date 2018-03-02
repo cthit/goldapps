@@ -183,7 +183,7 @@ func (s ServiceLDAP) GetCustomGroups() ([]goldapps.Group, error) {
 					entry.BaseDN, // The base dn to search
 					ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 					strings.Replace(entry.ParentFilter, "%childRDN%", getRDN(member.DN), -1), // The filter to apply
-					entry.Attributes,                                                         // A list attributes to retrieve
+					entry.Attributes, // A list attributes to retrieve
 					nil,
 				)
 

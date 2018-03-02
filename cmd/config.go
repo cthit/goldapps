@@ -15,4 +15,3 @@ func loadConfig() error {
 	return err
 
 }
-

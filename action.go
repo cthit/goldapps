@@ -1,15 +1,14 @@
 package goldapps
 
 type GroupUpdate struct {
-	Before		Group
-	After		Group
+	Before Group
+	After  Group
 }
 
-
 type Actions struct {
-	Updates		[]GroupUpdate
-	Additions	[]Group
-	Deletions	[]Group
+	Updates   []GroupUpdate
+	Additions []Group
+	Deletions []Group
 }
 
 // Commits a set of actions to a service.
@@ -48,10 +47,9 @@ func (actions Actions) Commit(service GroupUpdateService) (Actions, error) {
 	return performedActions, nil
 }
 
-
 // Determines actions required to make the "old" group list look as the "new" group list.
 // Returns a list with those actions.
-func ActionsRequired(old []Group, new []Group) (Actions) {
+func ActionsRequired(old []Group, new []Group) Actions {
 	requiredActions := Actions{}
 
 	for _, newGroup := range new {
@@ -90,7 +88,6 @@ func ActionsRequired(old []Group, new []Group) (Actions) {
 		}
 
 	}
-
 
 	return requiredActions
 }
