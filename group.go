@@ -5,9 +5,9 @@ package goldapps
 // Members is a lost of email addresses that are members of this group.
 // Aliases are alternative email addresses for the group.
 type Group struct {
-	Email   string
-	Members []string
-	Aliases   []string
+	Email   string `json:"email"`
+	Members []string `json:"members"`
+	Aliases   []string `json:"aliases"`
 }
 
 func (group Group) equals(other Group) (bool) {
