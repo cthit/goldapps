@@ -52,7 +52,7 @@ func (s GoogleService) DeleteGroup(group goldapps.Group) error {
 }
 
 func (s GoogleService) UpdateGroup(groupUpdate goldapps.GroupUpdate) error {
-	new := admin.Group{
+	newGroup := admin.Group{
 		Email: groupUpdate.Before.Email,
 	}
 
@@ -124,15 +124,15 @@ func (s GoogleService) UpdateGroup(groupUpdate goldapps.GroupUpdate) error {
 		}
 	}
 
-	return s.updateGroup(new)
+	return s.updateGroup(newGroup)
 }
 
 func (s GoogleService) AddGroup(group goldapps.Group) error {
-	new := admin.Group{
+	newGroup := admin.Group{
 		Email: group.Email,
 	}
 
-	err := s.addGroup(new)
+	err := s.addGroup(newGroup)
 	if err != nil {
 		return err
 	}
@@ -192,7 +192,7 @@ func (s GoogleService) GetGroups() ([]goldapps.Group, error) {
 			Aliases: group.Aliases,
 		}
 	}
-	fmt.Printf("\rDone!\n")
+	fmt.Printf("\rDone\n")
 
 	return groups, nil
 
