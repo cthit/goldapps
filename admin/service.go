@@ -12,11 +12,11 @@ import (
 	"golang.org/x/oauth2/google"
 )
 
-type GoogleService struct {
+type googleService struct {
 	service *admin.Service
 }
 
-func NewGoogleService(keyPath string, adminMail string) (*GoogleService, error) {
+func NewGoogleService(keyPath string, adminMail string) (goldapps.GroupUpdateService, error) {
 
 	jsonKey, err := ioutil.ReadFile(keyPath)
 	if err != nil {
@@ -40,18 +40,18 @@ func NewGoogleService(keyPath string, adminMail string) (*GoogleService, error) 
 		return nil, err
 	}
 
-	gs := &GoogleService{
+	gs := googleService{
 		service: service,
 	}
 
 	return gs, nil
 }
 
-func (s GoogleService) DeleteGroup(group goldapps.Group) error {
+func (s googleService) DeleteGroup(group goldapps.Group) error {
 	return s.deleteGroup(group.Email)
 }
 
-func (s GoogleService) UpdateGroup(groupUpdate goldapps.GroupUpdate) error {
+func (s googleService) UpdateGroup(groupUpdate goldapps.GroupUpdate) error {
 	newGroup := admin.Group{
 		Email: groupUpdate.Before.Email,
 	}
@@ -127,7 +127,7 @@ func (s GoogleService) UpdateGroup(groupUpdate goldapps.GroupUpdate) error {
 	return s.updateGroup(newGroup)
 }
 
-func (s GoogleService) AddGroup(group goldapps.Group) error {
+func (s googleService) AddGroup(group goldapps.Group) error {
 	newGroup := admin.Group{
 		Email: group.Email,
 	}
@@ -155,7 +155,7 @@ func (s GoogleService) AddGroup(group goldapps.Group) error {
 	return nil
 }
 
-func (s GoogleService) GetGroups() ([]goldapps.Group, error) {
+func (s googleService) GetGroups() ([]goldapps.Group, error) {
 
 	adminGroups, err := s.getGroups("my_customer")
 	if err != nil {
@@ -198,7 +198,7 @@ func (s GoogleService) GetGroups() ([]goldapps.Group, error) {
 
 }
 
-func (s GoogleService) getGroups(customer string) ([]admin.Group, error) {
+func (s googleService) getGroups(customer string) ([]admin.Group, error) {
 	groups, err := s.service.Groups.List().Customer(customer).Do()
 	if err != nil {
 		return nil, err
@@ -222,7 +222,7 @@ func (s GoogleService) getGroups(customer string) ([]admin.Group, error) {
 	return result, nil
 }
 
-func (s GoogleService) getMembers(email string) ([]string, error) {
+func (s googleService) getMembers(email string) ([]string, error) {
 	members, err := s.service.Members.List(email).Do()
 	if err != nil {
 		return nil, err
@@ -236,41 +236,41 @@ func (s GoogleService) getMembers(email string) ([]string, error) {
 	return result, nil
 }
 
-func (s GoogleService) getGroup(email string) (admin.Group, error) {
+func (s googleService) getGroup(email string) (admin.Group, error) {
 	group, err := s.service.Groups.Get(email).Do()
 
 	return *group, err
 }
 
-func (s GoogleService) addGroup(group admin.Group) error {
+func (s googleService) addGroup(group admin.Group) error {
 	_, err := s.service.Groups.Insert(&group).Do()
 	return err
 }
 
-func (s GoogleService) updateGroup(group admin.Group) error {
+func (s googleService) updateGroup(group admin.Group) error {
 	_, err := s.service.Groups.Update(group.Email, &group).Do()
 	return err
 }
 
-func (s GoogleService) deleteGroup(email string) error {
+func (s googleService) deleteGroup(email string) error {
 	err := s.service.Groups.Delete(email).Do()
 	return err
 }
 
-func (s GoogleService) deleteMember(groupEmail string, member string) error {
+func (s googleService) deleteMember(groupEmail string, member string) error {
 	return s.service.Members.Delete(groupEmail, member).Do()
 }
 
-func (s GoogleService) addMember(groupEmail string, memberEmail string) error {
+func (s googleService) addMember(groupEmail string, memberEmail string) error {
 	_, err := s.service.Members.Insert(groupEmail, &admin.Member{Email: memberEmail}).Do()
 	return err
 }
 
-func (s GoogleService) deleteAlias(groupEmail string, alias string) error {
+func (s googleService) deleteAlias(groupEmail string, alias string) error {
 	return s.service.Groups.Aliases.Delete(groupEmail, alias).Do()
 }
 
-func (s GoogleService) addAlias(groupEmail string, alias string) error {
+func (s googleService) addAlias(groupEmail string, alias string) error {
 	_, err := s.service.Groups.Aliases.Insert(groupEmail, &admin.Alias{Alias: alias}).Do()
 	return err
 }

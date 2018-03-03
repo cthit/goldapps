@@ -41,7 +41,9 @@ func (actions Actions) Commit(service GroupUpdateService) (Actions, error) {
 
 	performedActions := Actions{}
 
-	fmt.Println("Performing updates")
+	if len(actions.Updates) > 0 {
+		fmt.Println("Performing updates")
+	}
 	for _, update := range actions.Updates {
 		err := service.UpdateGroup(update)
 		if err != nil {
@@ -53,7 +55,9 @@ func (actions Actions) Commit(service GroupUpdateService) (Actions, error) {
 		printProgress(len(performedActions.Updates), len(actions.Updates))
 	}
 
-	fmt.Println("Performing additions")
+	if len(actions.Additions) > 0 {
+		fmt.Println("Performing additions")
+	}
 	for _, group := range actions.Additions {
 		err := service.AddGroup(group)
 		if err != nil {
@@ -65,7 +69,10 @@ func (actions Actions) Commit(service GroupUpdateService) (Actions, error) {
 		printProgress(len(performedActions.Additions), len(actions.Additions))
 	}
 
-	fmt.Println("Performing deletions")
+
+	if len(actions.Deletions) > 0 {
+		fmt.Println("Performing deletions")
+	}
 	for _, group := range actions.Deletions {
 		err := service.DeleteGroup(group)
 		if err != nil {
