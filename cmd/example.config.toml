@@ -1,3 +1,11 @@
+[gapps.consumer]
+    servicekeyfile = "gapps1.json"
+    adminaccount = "admin@example1.ex"
+
+[gapps.provider]
+    servicekeyfile = "gapps2.json"
+    adminaccount = "admin@example2.ex"
+
 [ldap]
 	url = "ldap.example.ex:999"
 	servername = "example.ex"
@@ -21,7 +29,3 @@
     filter = "(&(objectClass=Group))"
     parent_filter = "(&(ou=%childRDN%))"
     attibutes = ["cn", "displayName", "mail"]
-
-[gapps]
-    servicekeyfile = "gapps.json"
-    adminaccount = "admin@example.com"

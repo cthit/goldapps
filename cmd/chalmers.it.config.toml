@@ -1,3 +1,11 @@
+[gapps.consumer]
+    servicekeyfile = "gapps.json"
+    adminaccount = "admin@chalmers.it"
+
+[gapps.provider]
+    servicekeyfile = "gapps.json"
+    adminaccount = "admin@chalmers.it"
+
 [ldap]
 	url = "ldap.chalmers.it:636"
 	servername = "chalmers.it"
@@ -54,7 +62,3 @@
     filter = "(&(objectClass=itPosition)(cn=phadderchef))"
     attibutes = ["cn", "displayName", "mail"]
 #### ============== ####
-
-[gapps]
-    servicekeyfile = "gapps.json"
-    adminaccount = "admin@example.com"
