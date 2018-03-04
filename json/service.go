@@ -20,7 +20,7 @@ func NewJsonService(path string) (jsonService, error) {
 func (s jsonService) save(groups []goldapps.Group) error {
 	data, _ := json.Marshal(groups)
 
-	err := ioutil.WriteFile(s.path, data, 0600)
+	err := ioutil.WriteFile(s.path, data, 0666)
 	return err
 }
 

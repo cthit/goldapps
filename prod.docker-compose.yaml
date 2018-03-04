@@ -1,0 +1,13 @@
+version: "2"
+services:
+  app:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    image: goldapps:stable
+    command: -dry
+#    volumes:
+#      - some_config.toml:/app/config.toml:ro
+#      - google_api_key1.json:/app/gapps1.json:ro
+#      - google_api_key2.json:/app/gapps2.json:ro
+#      - data_for_json_groups:/app/data
