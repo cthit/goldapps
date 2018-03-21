@@ -16,6 +16,10 @@ type ServiceLDAP struct {
 	CustomEntryConfigs []CustomEntryConfig
 }
 
+func (s ServiceLDAP) GetUsers() ([]goldapps.User, error) {
+	panic("implement me")
+}
+
 type ServerConfig struct {
 	Url        string
 	ServerName string

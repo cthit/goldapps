@@ -1,12 +1,16 @@
 package goldapps
 
-type GroupUpdateService interface {
-	DeleteGroup(group Group) error
-	UpdateGroup(groupUpdate GroupUpdate) error
-	AddGroup(group Group) error
-	GroupService
+type UpdateService interface {
+	DeleteGroup(Group) error
+	UpdateGroup(GroupUpdate) error
+	AddGroup(Group) error
+	DeleteUser(User) error
+	UpdateUser(UserUpdate) error
+	AddUser(User) error
+	CollectionService
 }
 
-type GroupService interface {
+type CollectionService interface {
 	GetGroups() ([]Group, error)
+	GetUsers()  ([]User, error)
 }

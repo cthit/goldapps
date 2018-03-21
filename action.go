@@ -10,7 +10,12 @@ type GroupUpdate struct {
 	After  Group
 }
 
-type Actions struct {
+type UserUpdate struct {
+	Before User
+	After  User
+}
+
+type GroupActions struct {
 	Updates   []GroupUpdate
 	Additions []Group
 	Deletions []Group
@@ -37,9 +42,9 @@ func printProgress(done int, total int) {
 
 // Commits a set of actions to a service.
 // Returns all actions performed and a error if not all actions could be performed for some reason.
-func (actions Actions) Commit(service GroupUpdateService) (Actions, error) {
+func (actions GroupActions) Commit(service UpdateService) (GroupActions, error) {
 
-	performedActions := Actions{}
+	performedActions := GroupActions{}
 
 	if len(actions.Updates) > 0 {
 		fmt.Println("Performing updates")
@@ -89,8 +94,8 @@ func (actions Actions) Commit(service GroupUpdateService) (Actions, error) {
 
 // Determines actions required to make the "old" group list look as the "new" group list.
 // Returns a list with those actions.
-func ActionsRequired(old []Group, new []Group) Actions {
-	requiredActions := Actions{}
+func GroupActionsRequired(old []Group, new []Group) GroupActions {
+	requiredActions := GroupActions{}
 
 	for _, newGroup := range new {
 

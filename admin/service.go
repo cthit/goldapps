@@ -12,13 +12,14 @@ import (
 	"golang.org/x/oauth2/google"
 	"time"
 	"strings"
+	"google.golang.org/api/googleapi"
 )
 
 type googleService struct {
 	service *admin.Service
 }
 
-func NewGoogleService(keyPath string, adminMail string) (goldapps.GroupUpdateService, error) {
+func NewGoogleService(keyPath string, adminMail string) (goldapps.UpdateService, error) {
 
 	jsonKey, err := ioutil.ReadFile(keyPath)
 	if err != nil {
@@ -278,4 +279,121 @@ func (s googleService) deleteAlias(groupEmail string, alias string) error {
 func (s googleService) addAlias(groupEmail string, alias string) error {
 	_, err := s.service.Groups.Aliases.Insert(groupEmail, &admin.Alias{Alias: alias}).Do()
 	return err
+}
+
+func (s googleService) AddUser(user goldapps.User) error {
+	_,err := s.service.Users.Insert(&admin.User{
+		Addresses:                  nil,
+		AgreedToTerms:              false,
+		Aliases:                    nil,
+		ChangePasswordAtNextLogin:  false,
+		CreationTime:               "",
+		CustomSchemas:              nil,
+		CustomerId:                 "",
+		DeletionTime:               "",
+		Emails:                     nil,
+		Etag:                       "",
+		ExternalIds:                nil,
+		Gender:                     nil,
+		HashFunction:               "",
+		Id:                         "",
+		Ims:                        nil,
+		IncludeInGlobalAddressList: false,
+		IpWhitelisted:              false,
+		IsAdmin:                    false,
+		IsDelegatedAdmin:           false,
+		IsEnforcedIn2Sv:            false,
+		IsEnrolledIn2Sv:            false,
+		IsMailboxSetup:             false,
+		Keywords:                   nil,
+		Kind:                       "",
+		Languages:                  nil,
+		LastLoginTime:              "",
+		Locations:                  nil,
+		Name: &admin.UserName{
+			FamilyName:      "",
+			FullName:        "",
+			GivenName:       "",
+			ForceSendFields: nil,
+			NullFields:      nil,
+		},
+		NonEditableAliases: nil,
+		Notes:              nil,
+		OrgUnitPath:        "",
+		Organizations:      nil,
+		Password:           "",
+		Phones:             nil,
+		PosixAccounts:      nil,
+		PrimaryEmail:       "",
+		Relations:          nil,
+		SshPublicKeys:      nil,
+		Suspended:          false,
+		SuspensionReason:   "",
+		ThumbnailPhotoEtag: "",
+		ThumbnailPhotoUrl:  "",
+		Websites:           nil,
+		ServerResponse: googleapi.ServerResponse{
+			HTTPStatusCode: 0,
+			Header:         nil,
+		},
+		ForceSendFields: nil,
+		NullFields:      nil,
+	}).Do()
+	return err
+}
+
+
+
+func (s googleService) DeleteUser(goldapps.User) error {
+	panic("implement me")
+}
+
+func (s googleService) UpdateUser(goldapps.UserUpdate) error {
+	panic("implement me")
+}
+
+func (s googleService) GetUsers() ([]goldapps.User, error) {
+	users, err := s.getUsers("my_customer")
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println(users[1].Name.GivenName)
+	fmt.Println(users[1].Name.FamilyName)
+	fmt.Println(users[1].PrimaryEmail)
+	fmt.Println(users[1].Password) // does not work
+	fmt.Println(users[1].HashFunction) // does not work
+	externalId := users[1].ExternalIds.([]interface{})
+
+	for index ,id := range externalId  {
+		for key, value := range id.(map[string]interface{}) {
+			fmt.Printf("(%d) %s: %s\n", index, key, value.(string))
+		}
+	}
+
+	return nil, err
+}
+
+func (s googleService) getUsers(customer string) ([]admin.User, error) {
+	users, err := s.service.Users.List().Customer(customer).Do()
+	if err != nil {
+		return nil, err
+	}
+
+	for users.NextPageToken != "" {
+		newUsers, err := s.service.Users.List().Customer(customer).PageToken(users.NextPageToken).Do()
+		if err != nil {
+			return nil, err
+		}
+
+		users.Users = append(users.Users, newUsers.Users...)
+		users.NextPageToken = newUsers.NextPageToken
+	}
+
+	result := make([]admin.User, len(users.Users))
+	for i, user := range users.Users {
+		result[i] = *user
+	}
+
+	return result, nil
 }

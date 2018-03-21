@@ -11,6 +11,22 @@ type jsonService struct {
 	path string
 }
 
+func (s jsonService) DeleteUser(goldapps.User) error {
+	panic("implement me")
+}
+
+func (s jsonService) UpdateUser(goldapps.UserUpdate) error {
+	panic("implement me")
+}
+
+func (s jsonService) AddUser(goldapps.User) error {
+	panic("implement me")
+}
+
+func (s jsonService) GetUsers() ([]goldapps.User, error) {
+	panic("implement me")
+}
+
 func NewJsonService(path string) (jsonService, error) {
 	return jsonService{
 		path: path,

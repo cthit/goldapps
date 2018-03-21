@@ -22,11 +22,16 @@ func init() {
 
 func main() {
 
+	/*
 	fmt.Println("Setting up provider")
 	provider := getProvider()
+	*/
 	fmt.Println("Setting up consumer")
 	consumer := getConsumer()
 
+	consumer.GetUsers()
+
+	/*
 	fmt.Println("Collecting groups from the provider...")
 	providerGroups, err := provider.GetGroups()
 	if err != nil {
@@ -44,7 +49,7 @@ func main() {
 	fmt.Printf("%d groups collected.\n", len(consumerGroups))
 
 	fmt.Println("Colculating difference between the consumer and provider.")
-	proposedChanges := goldapps.ActionsRequired(consumerGroups, providerGroups)
+	proposedChanges := goldapps.GroupActionsRequired(consumerGroups, providerGroups)
 	changes := getChanges(proposedChanges)
 
 	if flags.interactive {
@@ -78,9 +83,10 @@ func main() {
 		fmt.Printf("\t Performed %d out of %d Updates\n", len(performed.Updates), len(changes.Updates))
 		fmt.Printf("Error: %s", err.Error())
 	}
+	*/
 }
 
-func getChanges(proposedChanges goldapps.Actions) goldapps.Actions {
+func getChanges(proposedChanges goldapps.GroupActions) goldapps.GroupActions {
 	if !flags.interactive && flags.noInteraction {
 		fmt.Printf(
 			"Automaticly accepting %d addition, %d deletions and %d updates\n",
@@ -141,7 +147,7 @@ func getChanges(proposedChanges goldapps.Actions) goldapps.Actions {
 	return proposedChanges
 }
 
-func getConsumer() goldapps.GroupUpdateService {
+func getConsumer() goldapps.UpdateService {
 	var to string
 	if flags.interactive {
 		to = askString("Which consumer would you like to use, 'gapps' or '*.json?", "gapps")
@@ -176,7 +182,7 @@ func getConsumer() goldapps.GroupUpdateService {
 	}
 }
 
-func getProvider() goldapps.GroupService {
+func getProvider() goldapps.CollectionService {
 	var from string
 	if flags.interactive {
 		from = askString("which provider would you like to use, 'ldap', 'gapps' or '*.json'?", "ldap")
