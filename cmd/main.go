@@ -73,9 +73,10 @@ func main() {
 		return
 	} else {
 		fmt.Println("All actions could not be performed...")
-		fmt.Printf("/t Performed %d out of %d Additions/n", len(performed.Additions), len(changes.Additions))
-		fmt.Printf("/t Performed %d out of %d Deletions/n", len(performed.Deletions), len(changes.Deletions))
-		fmt.Printf("/t Performed %d out of %d Updates/n", len(performed.Updates), len(changes.Updates))
+		fmt.Printf("\t Performed %d out of %d Additions\n", len(performed.Additions), len(changes.Additions))
+		fmt.Printf("\t Performed %d out of %d Deletions\n", len(performed.Deletions), len(changes.Deletions))
+		fmt.Printf("\t Performed %d out of %d Updates\n", len(performed.Updates), len(changes.Updates))
+		fmt.Printf("Error: %s", err.Error())
 	}
 }
 

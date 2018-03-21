@@ -10,6 +10,8 @@ import (
 	"github.com/cthit/goldapps"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
+	"time"
+	"strings"
 )
 
 type googleService struct {
@@ -60,7 +62,7 @@ func (s googleService) UpdateGroup(groupUpdate goldapps.GroupUpdate) error {
 	for _, member := range groupUpdate.After.Members {
 		exists := false
 		for _, existingMember := range groupUpdate.Before.Members {
-			if member == existingMember {
+			if strings.ToLower(member) == strings.ToLower(existingMember) {
 				exists = true
 				break
 			}
@@ -68,6 +70,7 @@ func (s googleService) UpdateGroup(groupUpdate goldapps.GroupUpdate) error {
 		if !exists {
 			err := s.addMember(groupUpdate.Before.Email, member)
 			if err != nil {
+				fmt.Printf("Failed to add menber %s\n",member)
 				return err
 			}
 		}
@@ -77,7 +80,7 @@ func (s googleService) UpdateGroup(groupUpdate goldapps.GroupUpdate) error {
 	for _, existingMember := range groupUpdate.Before.Members {
 		keep := false
 		for _, member := range groupUpdate.After.Members {
-			if existingMember == member {
+			if strings.ToLower(existingMember) == strings.ToLower(member) {
 				keep = true
 				break
 			}
@@ -94,7 +97,7 @@ func (s googleService) UpdateGroup(groupUpdate goldapps.GroupUpdate) error {
 	for _, alias := range groupUpdate.After.Aliases {
 		exists := false
 		for _, existingAlias := range groupUpdate.Before.Aliases {
-			if alias == existingAlias {
+			if strings.ToLower(alias) == strings.ToLower(existingAlias) {
 				exists = true
 				break
 			}
@@ -111,7 +114,7 @@ func (s googleService) UpdateGroup(groupUpdate goldapps.GroupUpdate) error {
 	for _, existingAlias := range groupUpdate.Before.Aliases {
 		keep := false
 		for _, alias := range groupUpdate.After.Aliases {
-			if existingAlias == alias {
+			if strings.ToLower(existingAlias) == strings.ToLower(alias) {
 				keep = true
 				break
 			}
@@ -136,6 +139,8 @@ func (s googleService) AddGroup(group goldapps.Group) error {
 	if err != nil {
 		return err
 	}
+
+	time.Sleep(time.Second*10)
 
 	// Add members
 	for _, member := range group.Members {
