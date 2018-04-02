@@ -1,8 +1,8 @@
 # Configuration files
 config.toml
 
-# Much secret key file
-gapps.json
+# Data files
+**.json
 
 # Binary files
 /google-ldap-sync
