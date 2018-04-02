@@ -1,7 +1,6 @@
 package goldapps
 
 import (
-	"bytes"
 	"fmt"
 )
 
@@ -10,34 +9,10 @@ type GroupUpdate struct {
 	After  Group
 }
 
-type UserUpdate struct {
-	Before User
-	After  User
-}
-
 type GroupActions struct {
 	Updates   []GroupUpdate
 	Additions []Group
 	Deletions []Group
-}
-
-func printProgress(done int, total int) {
-	p := (done * 100) / total
-	builder := bytes.Buffer{}
-	for i := 0; i < 100; i++ {
-		if i < p {
-			builder.WriteByte('=')
-		} else if i == p {
-			builder.WriteByte('>')
-		} else {
-			builder.WriteByte(' ')
-		}
-
-	}
-	fmt.Printf("\rProgress: [%s] %d/%d", builder.String(), done, total)
-	if done == total {
-		fmt.Printf("\rDone\n")
-	}
 }
 
 // Commits a set of actions to a service.
@@ -73,7 +48,6 @@ func (actions GroupActions) Commit(service UpdateService) (GroupActions, error) 
 		performedActions.Additions = append(performedActions.Additions, group)
 		printProgress(len(performedActions.Additions), len(actions.Additions))
 	}
-
 
 	if len(actions.Deletions) > 0 {
 		fmt.Println("Performing deletions")
