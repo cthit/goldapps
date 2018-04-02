@@ -1,99 +1,182 @@
 package json
 
 import (
-	"github.com/cthit/goldapps"
 	"encoding/json"
-	"io/ioutil"
 	"fmt"
+	"github.com/cthit/goldapps"
+	"io/ioutil"
 )
 
-type jsonService struct {
+type Service struct {
 	path string
 }
 
-func (s jsonService) DeleteUser(goldapps.User) error {
-	panic("implement me")
-}
-
-func (s jsonService) UpdateUser(goldapps.UserUpdate) error {
-	panic("implement me")
-}
-
-func (s jsonService) AddUser(goldapps.User) error {
-	panic("implement me")
-}
-
-func (s jsonService) GetUsers() ([]goldapps.User, error) {
-	panic("implement me")
-}
-
-func NewJsonService(path string) (jsonService, error) {
-	return jsonService{
-		path: path,
-	}, nil
-}
-
-func (s jsonService) save(groups []goldapps.Group) error {
-	data, _ := json.Marshal(groups)
-
-	err := ioutil.WriteFile(s.path, data, 0666)
-	return err
-}
-
-func (s jsonService) DeleteGroup(group goldapps.Group) error {
+func (s Service) DeleteUser(user goldapps.User) error {
 	groups, err := s.GetGroups()
 	if err != nil {
 		return err
 	}
+	users, err := s.GetUsers()
+	if err != nil {
+		return err
+	}
 
-	for i,g := range groups {
-		if g.Email == group.Email{
-			err = s.save(append(groups[:i], groups[i+1:]...))
+	for i, u := range users {
+		if u.Cid == user.Cid {
+			err = s.save(data{
+				groups,
+				append(users[:i], users[i+1:]...),
+			})
 			return err
 		}
 	}
-	return fmt.Errorf("group not found %v", group)
+	return fmt.Errorf("user not found %v", user)
 }
 
-func (s jsonService) UpdateGroup(groupUpdate goldapps.GroupUpdate) error {
+func (s Service) UpdateUser(update goldapps.UserUpdate) error {
 	groups, err := s.GetGroups()
 	if err != nil {
 		return err
 	}
+	users, err := s.GetUsers()
+	if err != nil {
+		return err
+	}
 
-	for i,g := range groups {
-		if g.Email == groupUpdate.Before.Email{
-			err = s.save(append(append(groups[:i], groupUpdate.After), groups[i+1:]...))
+	for i, u := range users {
+		if u.Cid == update.Before.Cid {
+			err = s.save(data{
+				groups,
+				append(append(users[:i], update.After), users[i+1:]...),
+			})
 			return err
 		}
 	}
-	return fmt.Errorf("group not found %v", groupUpdate.Before)
+	return fmt.Errorf("user not found %v", update.Before)
 }
 
-func (s jsonService) AddGroup(group goldapps.Group) error {
+func (s Service) AddUser(user goldapps.User) error {
 	groups, err := s.GetGroups()
 	if err != nil {
 		return err
 	}
+	users, err := s.GetUsers()
+	if err != nil {
+		return err
+	}
 
-	groups = append(groups, group)
+	users = append(users, user)
 
-	err = s.save(groups)
+	err = s.save(data{
+		groups,
+		users,
+	})
 	return err
 }
 
-func (s jsonService) GetGroups() ([]goldapps.Group, error) {
+func (s Service) GetUsers() ([]goldapps.User, error) {
 
 	bytes, err := ioutil.ReadFile(s.path)
 	if err != nil {
 		return nil, err
 	}
 
-	var data []goldapps.Group
+	var data data
 	err = json.Unmarshal(bytes, &data)
 	if err != nil {
 		return nil, err
 	}
 
-	return data, nil
+	return data.Users, nil
+}
+
+func NewJsonService(path string) (Service, error) {
+	return Service{
+		path: path,
+	}, nil
+}
+
+func (s Service) save(data data) error {
+	json, _ := json.Marshal(data)
+
+	err := ioutil.WriteFile(s.path, json, 0666)
+	return err
+}
+
+func (s Service) DeleteGroup(group goldapps.Group) error {
+	groups, err := s.GetGroups()
+	if err != nil {
+		return err
+	}
+	users, err := s.GetUsers()
+	if err != nil {
+		return err
+	}
+
+	for i, g := range groups {
+		if g.Email == group.Email {
+			err = s.save(data{append(groups[:i], groups[i+1:]...),
+				users,
+			})
+			return err
+		}
+	}
+	return fmt.Errorf("group not found %v", group)
+}
+
+func (s Service) UpdateGroup(groupUpdate goldapps.GroupUpdate) error {
+	groups, err := s.GetGroups()
+	if err != nil {
+		return err
+	}
+	users, err := s.GetUsers()
+	if err != nil {
+		return err
+	}
+
+	for i, g := range groups {
+		if g.Email == groupUpdate.Before.Email {
+			err = s.save(data{
+				append(append(groups[:i], groupUpdate.After), groups[i+1:]...),
+				users,
+			})
+			return err
+		}
+	}
+	return fmt.Errorf("group not found %v", groupUpdate.Before)
+}
+
+func (s Service) AddGroup(group goldapps.Group) error {
+	groups, err := s.GetGroups()
+	if err != nil {
+		return err
+	}
+	users, err := s.GetUsers()
+	if err != nil {
+		return err
+	}
+
+	groups = append(groups, group)
+
+	err = s.save(data{
+		groups,
+		users,
+	})
+	return err
+}
+
+func (s Service) GetGroups() ([]goldapps.Group, error) {
+
+	bytes, err := ioutil.ReadFile(s.path)
+	if err != nil {
+		return nil, err
+	}
+
+	var data data
+	err = json.Unmarshal(bytes, &data)
+	if err != nil {
+		return nil, err
+	}
+
+	return data.Groups, nil
 }
