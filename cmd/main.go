@@ -22,16 +22,12 @@ func init() {
 
 func main() {
 
-	/*
 	fmt.Println("Setting up provider")
 	provider := getProvider()
-	*/
+
 	fmt.Println("Setting up consumer")
 	consumer := getConsumer()
 
-	consumer.GetUsers()
-
-	/*
 	fmt.Println("Collecting groups from the provider...")
 	providerGroups, err := provider.GetGroups()
 	if err != nil {
@@ -39,6 +35,14 @@ func main() {
 		panic(err)
 	}
 	fmt.Printf("%d groups collected.\n", len(providerGroups))
+
+	fmt.Println("Collecting users from the provider...")
+	providerUsers, err := provider.GetUsers()
+	if err != nil {
+		fmt.Println("Failed to collect users from provider")
+		panic(err)
+	}
+	fmt.Printf("%d users collected.\n", len(providerUsers))
 
 	fmt.Println("Collecting groups from the consumer...")
 	consumerGroups, err := consumer.GetGroups()
@@ -48,17 +52,32 @@ func main() {
 	}
 	fmt.Printf("%d groups collected.\n", len(consumerGroups))
 
-	fmt.Println("Colculating difference between the consumer and provider.")
-	proposedChanges := goldapps.GroupActionsRequired(consumerGroups, providerGroups)
-	changes := getChanges(proposedChanges)
+	fmt.Println("Collecting users from the consumer...")
+	consumerUsers, err := consumer.GetUsers()
+	if err != nil {
+		fmt.Println("Failed to collect users from consumer")
+		panic(err)
+	}
+	fmt.Printf("%d users collected.\n", len(consumerUsers))
+
+	fmt.Println("Colculating difference between the consumer and provider groups.")
+	proposedGroupChanges := goldapps.GroupActionsRequired(consumerGroups, providerGroups)
+	groupChanges := getGroupChanges(proposedGroupChanges)
+
+	fmt.Println("Colculating difference between the consumer and provider users.")
+	proposedUserChanges := goldapps.UserActionsRequired(consumerUsers, providerUsers)
+	userChanges := getUserChanges(proposedUserChanges)
 
 	if flags.interactive {
 		proceed := askBool(
 			fmt.Sprintf(
-				"Are you sure you want to commit these additions(%d), deletions(%d) and updates(%d)?",
-				len(changes.Additions),
-				len(changes.Deletions),
-				len(changes.Updates),
+				"Are you sure you want to commit these (groups + users) additions(%d + %d), deletions(%d + %d) and updates(%d + %d)?",
+				len(groupChanges.Additions),
+				len(userChanges.Additions),
+				len(groupChanges.Deletions),
+				len(userChanges.Deletions),
+				len(groupChanges.Updates),
+				len(userChanges.Updates),
 			),
 			true,
 		)
@@ -72,37 +91,43 @@ func main() {
 		return
 	}
 
-	performed, err := changes.Commit(consumer)
-	if err == nil {
+	groupChangesPerformed, err1 := groupChanges.Commit(consumer)
+	userChangesPerformed, err2 := userChanges.Commit(consumer)
+	if err1 == nil && err2 == nil {
 		fmt.Println("All actions performed!")
 		return
 	} else {
 		fmt.Println("All actions could not be performed...")
-		fmt.Printf("\t Performed %d out of %d Additions\n", len(performed.Additions), len(changes.Additions))
-		fmt.Printf("\t Performed %d out of %d Deletions\n", len(performed.Deletions), len(changes.Deletions))
-		fmt.Printf("\t Performed %d out of %d Updates\n", len(performed.Updates), len(changes.Updates))
-		fmt.Printf("Error: %s", err.Error())
+		fmt.Printf("\t For groups:\n")
+		fmt.Printf("\t\t Performed %d out of %d Additions\n", len(groupChangesPerformed.Additions), len(groupChanges.Additions))
+		fmt.Printf("\t\t Performed %d out of %d Deletions\n", len(groupChangesPerformed.Deletions), len(groupChanges.Deletions))
+		fmt.Printf("\t\t Performed %d out of %d Updates\n", len(groupChangesPerformed.Updates), len(groupChanges.Updates))
+		fmt.Printf("\t\t Error: %s", err1.Error())
+		fmt.Printf("\t For users:\n")
+		fmt.Printf("\t\t Performed %d out of %d Additions\n", len(userChangesPerformed.Additions), len(userChanges.Additions))
+		fmt.Printf("\t\t Performed %d out of %d Deletions\n", len(userChangesPerformed.Deletions), len(userChanges.Deletions))
+		fmt.Printf("\t\t Performed %d out of %d Updates\n", len(userChangesPerformed.Updates), len(userChanges.Updates))
+		fmt.Printf("\t\t Error: %s", err2.Error())
 	}
-	*/
 }
 
-func getChanges(proposedChanges goldapps.GroupActions) goldapps.GroupActions {
+func getGroupChanges(proposedChanges goldapps.GroupActions) goldapps.GroupActions {
 	if !flags.interactive && flags.noInteraction {
 		fmt.Printf(
-			"Automaticly accepting %d addition, %d deletions and %d updates\n",
+			"(Groups) Automaticly accepting %d addition, %d deletions and %d updates\n",
 			len(proposedChanges.Additions),
 			len(proposedChanges.Deletions),
 			len(proposedChanges.Updates),
 		)
 	} else {
 		// Handle additions
-		fmt.Printf("Additions (%d):\n", len(proposedChanges.Additions))
+		fmt.Printf("(Groups) Additions (%d):\n", len(proposedChanges.Additions))
 		if len(proposedChanges.Additions) > 0 {
 			for _, group := range proposedChanges.Additions {
 				fmt.Printf("\t%v\n", group)
 			}
 			add := askBool(
-				fmt.Sprintf("Do you want to commit those %d additions?", len(proposedChanges.Additions)),
+				fmt.Sprintf("(Groups) Do you want to commit those %d additions?", len(proposedChanges.Additions)),
 				true,
 			)
 			if !add {
@@ -111,13 +136,13 @@ func getChanges(proposedChanges goldapps.GroupActions) goldapps.GroupActions {
 		}
 
 		// Handle Deletions
-		fmt.Printf("Deletions (%d):\n", len(proposedChanges.Deletions))
+		fmt.Printf("(Groups) Deletions (%d):\n", len(proposedChanges.Deletions))
 		if len(proposedChanges.Deletions) > 0 {
 			for _, group := range proposedChanges.Deletions {
 				fmt.Printf("\t%v\n", group)
 			}
 			add := askBool(
-				fmt.Sprintf("Do you want to commit those %d deletions?", len(proposedChanges.Deletions)),
+				fmt.Sprintf("(Groups) Do you want to commit those %d deletions?", len(proposedChanges.Deletions)),
 				true,
 			)
 			if !add {
@@ -126,7 +151,7 @@ func getChanges(proposedChanges goldapps.GroupActions) goldapps.GroupActions {
 		}
 
 		// Handle changes
-		fmt.Printf("Changes (%d):\n", len(proposedChanges.Updates))
+		fmt.Printf("(Groups) Changes (%d):\n", len(proposedChanges.Updates))
 		if len(proposedChanges.Updates) > 0 {
 			for _, update := range proposedChanges.Updates {
 				fmt.Printf("\tUpdate:\n")
@@ -136,7 +161,68 @@ func getChanges(proposedChanges goldapps.GroupActions) goldapps.GroupActions {
 				fmt.Printf("\t\t\t%v\n", update.After)
 			}
 			add := askBool(
-				fmt.Sprintf("Do you want to commit those %d updates?", len(proposedChanges.Updates)),
+				fmt.Sprintf("(Groups) Do you want to commit those %d updates?", len(proposedChanges.Updates)),
+				true,
+			)
+			if !add {
+				proposedChanges.Updates = nil
+			}
+		}
+	}
+	return proposedChanges
+}
+
+func getUserChanges(proposedChanges goldapps.UserActions) goldapps.UserActions {
+	if !flags.interactive && flags.noInteraction {
+		fmt.Printf(
+			"(Users) Automaticly accepting %d addition, %d deletions and %d updates\n",
+			len(proposedChanges.Additions),
+			len(proposedChanges.Deletions),
+			len(proposedChanges.Updates),
+		)
+	} else {
+		// Handle additions
+		fmt.Printf("(Users) Additions (%d):\n", len(proposedChanges.Additions))
+		if len(proposedChanges.Additions) > 0 {
+			for _, user := range proposedChanges.Additions {
+				fmt.Printf("\t%v\n", user)
+			}
+			add := askBool(
+				fmt.Sprintf("(Users) Do you want to commit those %d additions?", len(proposedChanges.Additions)),
+				true,
+			)
+			if !add {
+				proposedChanges.Additions = nil
+			}
+		}
+
+		// Handle Deletions
+		fmt.Printf("(Users) Deletions (%d):\n", len(proposedChanges.Deletions))
+		if len(proposedChanges.Deletions) > 0 {
+			for _, user := range proposedChanges.Deletions {
+				fmt.Printf("\t%v\n", user)
+			}
+			add := askBool(
+				fmt.Sprintf("(Users) Do you want to commit those %d deletions?", len(proposedChanges.Deletions)),
+				true,
+			)
+			if !add {
+				proposedChanges.Deletions = nil
+			}
+		}
+
+		// Handle changes
+		fmt.Printf("(Users) Changes (%d):\n", len(proposedChanges.Updates))
+		if len(proposedChanges.Updates) > 0 {
+			for _, update := range proposedChanges.Updates {
+				fmt.Printf("\tUpdate:\n")
+				fmt.Printf("\t\tFrom:\n")
+				fmt.Printf("\t\t\t%v\n", update.Before)
+				fmt.Printf("\t\tTo:\n")
+				fmt.Printf("\t\t\t%v\n", update.After)
+			}
+			add := askBool(
+				fmt.Sprintf("(Users) Do you want to commit those %d updates?", len(proposedChanges.Updates)),
 				true,
 			)
 			if !add {

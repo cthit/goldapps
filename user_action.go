@@ -22,7 +22,7 @@ func (actions UserActions) Commit(service UpdateService) (UserActions, error) {
 	performedActions := UserActions{}
 
 	if len(actions.Updates) > 0 {
-		fmt.Println("Performing updates")
+		fmt.Println("(Users) Performing updates")
 	}
 	for _, update := range actions.Updates {
 		err := service.UpdateUser(update)
@@ -36,7 +36,7 @@ func (actions UserActions) Commit(service UpdateService) (UserActions, error) {
 	}
 
 	if len(actions.Additions) > 0 {
-		fmt.Println("Performing additions")
+		fmt.Println("(Users) Performing additions")
 	}
 	for _, user := range actions.Additions {
 		err := service.AddUser(user)
@@ -50,7 +50,7 @@ func (actions UserActions) Commit(service UpdateService) (UserActions, error) {
 	}
 
 	if len(actions.Deletions) > 0 {
-		fmt.Println("Performing deletions")
+		fmt.Println("(Users) Performing deletions")
 	}
 	for _, user := range actions.Deletions {
 		err := service.DeleteUser(user)
