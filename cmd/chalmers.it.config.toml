@@ -1,0 +1,64 @@
+[gapps.consumer]
+    servicekeyfile = "gapps.json"
+    adminaccount = "admin@chalmers.it"
+
+[gapps.provider]
+    servicekeyfile = "gapps.json"
+    adminaccount = "admin@chalmers.it"
+
+[ldap]
+	url = "ldap.chalmers.it:636"
+	servername = "chalmers.it"
+	user = "cn=SERVICE_ACCOUNT_GOES_HERE,dc=chalmers,dc=it"
+	password = "PASSWORD_GOES_HERE"
+	custom = ["chairman", "chairmen.fkit", "chairmen.committees", "treasurers", "phadderchef", "fkit"]
+
+[ldap.groups]
+	basedn = "ou=groups,dc=chalmers,dc=it"
+	filter = "(|(objectClass=itGroup)(objectClass=itPosition))"
+	attibutes = ["cn", "displayName", "mail", "member"]
+
+[ldap.users]
+	basedn = "ou=people,dc=chalmers,dc=it"
+	filter = "(&(objectClass=chalmersstudent))"
+	attibutes = ["uid", "mail"]
+
+#### CUSTOM FILTERS ####
+[ldap.fkit]
+    mail = "fkit@chalmers.it"
+	basedn = "ou=fkit,ou=groups,dc=chalmers,dc=it"
+	filter = "(&(objectClass=itGroup))"
+    parent_filter = "(&(ou=%childRDN%))"
+	attibutes = ["cn", "displayName", "mail"]
+
+[ldap.chairman]
+	mail = "ordforande@chalmers.it"
+	basedn = "ou=styrit,ou=fkit,ou=groups,dc=chalmers,dc=it"
+	filter = "(&(objectClass=itPosition)(cn=ordf))"
+	attibutes = ["cn", "displayName", "mail"]
+
+[ldap.chairmen.fkit]
+	mail = "ordforanden@chalmers.it"
+	basedn = "ou=fkit,ou=groups,dc=chalmers,dc=it"
+	filter = "(&(objectClass=itPosition)(cn=ordf))"
+	attibutes = ["cn", "displayName", "mail"]
+
+[ldap.chairmen.committees]
+	mail = "ordforanden.kommiteer@chalmers.it"
+	basedn = "ou=fkit,ou=groups,dc=chalmers,dc=it"
+	filter = "(&(objectClass=itPosition)(cn=ordf))"
+	parent_filter = "(&(objectClass=itGroup)(type=Committee))"
+	attibutes = ["cn", "displayName", "mail", "type"]
+
+[ldap.treasurers]
+	mail = "kassorer@chalmers.it"
+	basedn = "ou=fkit,ou=groups,dc=chalmers,dc=it"
+	filter = "(&(objectClass=itPosition)(cn=kassor))"
+	attibutes = ["cn", "displayName", "mail"]
+
+[ldap.phadderchef]
+    mail = "phadderchef@chalmers.it"
+    basedn = "ou=nollkit,ou=fkit,ou=groups,dc=chalmers,dc=it"
+    filter = "(&(objectClass=itPosition)(cn=phadderchef))"
+    attibutes = ["cn", "displayName", "mail"]
+#### ============== ####
