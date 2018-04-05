@@ -17,6 +17,11 @@ import (
 
 const gdprSuspensionText = "You have not attended the GDPR education!"
 
+const googleDuplicateEntryError = "googleapi: Error 409: Entity already exists., duplicate"
+
+// my_customer seems to work...
+const googleCustomer = "my_customer"
+
 type googleService struct {
 	google *admin.Service
 	admin  string
@@ -176,7 +181,7 @@ func (s googleService) AddGroup(group goldapps.Group) error {
 
 func (s googleService) GetGroups() ([]goldapps.Group, error) {
 
-	adminGroups, err := s.getGoogleGroups("my_customer")
+	adminGroups, err := s.getGoogleGroups(googleCustomer)
 	if err != nil {
 		return nil, err
 	}
@@ -219,7 +224,15 @@ func (s googleService) GetGroups() ([]goldapps.Group, error) {
 
 func (s googleService) AddUser(user goldapps.User) error {
 	_, err := s.google.Users.Insert(buildGoldappsUser(user, s.domain)).Do()
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Google needs time for the addition to propagate
+	time.Sleep(time.Second)
+
+	// Add alias for nick@example.ex
+	return s.addUserAlias(fmt.Sprintf("%s@%s", user.Cid, s.domain), fmt.Sprintf("%s@%s", user.Nick, s.domain))
 }
 
 func (s googleService) UpdateUser(update goldapps.UserUpdate) error {
@@ -227,7 +240,12 @@ func (s googleService) UpdateUser(update goldapps.UserUpdate) error {
 		fmt.Sprintf("%s@%s", update.Before.Cid, s.domain),
 		buildGoldappsUser(update.After, s.domain),
 	).Do()
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Add alias for nick@example.ex
+	return s.addUserAlias(fmt.Sprintf("%s@%s", update.After.Cid, s.domain), fmt.Sprintf("%s@%s", update.After.Nick, s.domain))
 }
 
 func (s googleService) DeleteUser(user goldapps.User) error {
@@ -242,7 +260,7 @@ func (s googleService) DeleteUser(user goldapps.User) error {
 }
 
 func (s googleService) GetUsers() ([]goldapps.User, error) {
-	adminUsers, err := s.getGoogleUsers("my_customer")
+	adminUsers, err := s.getGoogleUsers(googleCustomer)
 	if err != nil {
 		return nil, err
 	}
@@ -343,6 +361,20 @@ func (s googleService) getGoogleUsers(customer string) ([]admin.User, error) {
 	return result, nil
 }
 
+func (s googleService) addUserAlias(userKey string, alias string) error {
+	_, err := s.google.Users.Aliases.Insert(userKey, &admin.Alias{
+		Alias: alias,
+	}).Do()
+	if err != nil {
+		if err.Error() == googleDuplicateEntryError {
+			fmt.Printf("Warning: Could not add alias for %s. It already exists. \n", alias)
+		} else {
+			return err
+		}
+	}
+	return nil
+}
+
 func buildGoldappsUser(user goldapps.User, domain string) *admin.User {
 	return &admin.User{
 		Name: &admin.UserName{
@@ -351,16 +383,9 @@ func buildGoldappsUser(user goldapps.User, domain string) *admin.User {
 		},
 		IncludeInGlobalAddressList: true,
 		PrimaryEmail:               fmt.Sprintf("%s@%s", user.Cid, domain),
-		Emails: &[]admin.UserEmail{
-			{
-				Address: fmt.Sprintf("%s@%s", user.Nick, domain),
-				Primary: false,
-				Type:    "other",
-			},
-		},
-		Password:                  "RandomPassword", // Todo: how to do with passwords?
-		ChangePasswordAtNextLogin: true,
-		Suspended:                 !user.GdprEducation,
-		SuspensionReason:          gdprSuspensionText,
+		Password:                   "RandomPassword", // Todo: how to do with passwords?
+		ChangePasswordAtNextLogin:  true,
+		Suspended:                  !user.GdprEducation,
+		SuspensionReason:           gdprSuspensionText,
 	}
 }
