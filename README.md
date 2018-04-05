@@ -29,5 +29,8 @@ The following flags are available:
 * `-dry`: Makes sure the program does not change anything.
 * `-from someString`: Set the group source to `ldap`, `gapps` or `*.json`. In case of `gapps` config value `gapps.provider` will be used.
 * `-to someString`: Set the group consumer to 'gapps' or '*.json'. In case of `gapps` config value `gapps.consumer` will be used.
+* `-users`: Only collect and sync users
+* `-groups`: Only collect and sync groups
+
 
 Notice that flags should be combined on the form `goldapps -a -b` and **NOT** on the form `goldapps -ab`.

@@ -28,45 +28,65 @@ func main() {
 	fmt.Println("Setting up consumer")
 	consumer := getConsumer()
 
-	fmt.Println("Collecting groups from the provider...")
-	providerGroups, err := provider.GetGroups()
-	if err != nil {
-		fmt.Println("Failed to collect groups from provider")
-		panic(err)
+	var err error
+
+	var providerGroups []goldapps.Group
+	if !flags.onlyUsers {
+		fmt.Println("Collecting groups from the provider...")
+		providerGroups, err = provider.GetGroups()
+		if err != nil {
+			fmt.Println("Failed to collect groups from provider")
+			panic(err)
+		}
+		fmt.Printf("%d groups collected.\n", len(providerGroups))
 	}
-	fmt.Printf("%d groups collected.\n", len(providerGroups))
 
-	fmt.Println("Collecting users from the provider...")
-	providerUsers, err := provider.GetUsers()
-	if err != nil {
-		fmt.Println("Failed to collect users from provider")
-		panic(err)
+	var providerUsers []goldapps.User
+	if !flags.onlyGroups {
+		fmt.Println("Collecting users from the provider...")
+		providerUsers, err = provider.GetUsers()
+		if err != nil {
+			fmt.Println("Failed to collect users from provider")
+			panic(err)
+		}
+		fmt.Printf("%d users collected.\n", len(providerUsers))
 	}
-	fmt.Printf("%d users collected.\n", len(providerUsers))
 
-	fmt.Println("Collecting groups from the consumer...")
-	consumerGroups, err := consumer.GetGroups()
-	if err != nil {
-		fmt.Println("Failed to collect groups from consumer")
-		panic(err)
+	var consumerGroups []goldapps.Group
+	if !flags.onlyUsers {
+		fmt.Println("Collecting groups from the consumer...")
+		consumerGroups, err = consumer.GetGroups()
+		if err != nil {
+			fmt.Println("Failed to collect groups from consumer")
+			panic(err)
+		}
+		fmt.Printf("%d groups collected.\n", len(consumerGroups))
 	}
-	fmt.Printf("%d groups collected.\n", len(consumerGroups))
 
-	fmt.Println("Collecting users from the consumer...")
-	consumerUsers, err := consumer.GetUsers()
-	if err != nil {
-		fmt.Println("Failed to collect users from consumer")
-		panic(err)
+	var consumerUsers []goldapps.User
+	if !flags.onlyGroups {
+		fmt.Println("Collecting users from the consumer...")
+		consumerUsers, err = consumer.GetUsers()
+		if err != nil {
+			fmt.Println("Failed to collect users from consumer")
+			panic(err)
+		}
+		fmt.Printf("%d users collected.\n", len(consumerUsers))
 	}
-	fmt.Printf("%d users collected.\n", len(consumerUsers))
 
-	fmt.Println("Colculating difference between the consumer and provider groups.")
-	proposedGroupChanges := goldapps.GroupActionsRequired(consumerGroups, providerGroups)
-	groupChanges := getGroupChanges(proposedGroupChanges)
+	groupChanges := goldapps.GroupActions{}
+	if !flags.onlyUsers {
+		fmt.Println("Colculating difference between the consumer and provider groups.")
+		proposedGroupChanges := goldapps.GroupActionsRequired(consumerGroups, providerGroups)
+		groupChanges = getGroupChanges(proposedGroupChanges)
+	}
 
-	fmt.Println("Colculating difference between the consumer and provider users.")
-	proposedUserChanges := goldapps.UserActionsRequired(consumerUsers, providerUsers)
-	userChanges := getUserChanges(proposedUserChanges)
+	userChanges := goldapps.UserActions{}
+	if !flags.onlyGroups {
+		fmt.Println("Colculating difference between the consumer and provider users.")
+		proposedUserChanges := goldapps.UserActionsRequired(consumerUsers, providerUsers)
+		userChanges = getUserChanges(proposedUserChanges)
+	}
 
 	if flags.interactive {
 		proceed := askBool(
