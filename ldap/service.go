@@ -6,6 +6,7 @@ import (
 	"github.com/cthit/goldapps"
 	"gopkg.in/ldap.v2"
 	"strings"
+	"fmt"
 )
 
 type ServiceLDAP struct {
@@ -14,10 +15,6 @@ type ServiceLDAP struct {
 	GroupsConfig       EntryConfig
 	UsersConfig        EntryConfig
 	CustomEntryConfigs []CustomEntryConfig
-}
-
-func (s ServiceLDAP) GetUsers() ([]goldapps.User, error) {
-	panic("implement me")
 }
 
 type ServerConfig struct {
@@ -86,6 +83,81 @@ func (s ServiceLDAP) users() ([]*ldap.Entry, error) {
 	}
 
 	return result.Entries, nil
+}
+
+// Collect all users who are members of a committee
+func (s ServiceLDAP) GetUsers() ([]goldapps.User, error) {
+	users, err := s.users()
+	if err != nil {
+		return nil, err
+	}
+
+	// Create a search request to collect all groups from LDAP
+	searchRequest := ldap.NewSearchRequest(
+		s.GroupsConfig.BaseDN, // The base dn to search
+		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+		s.GroupsConfig.Filter,     // The filter to apply
+		s.GroupsConfig.Attributes, // A list attributes to retrieve
+		nil,
+	)
+
+	// Collect the group entries
+	groups, err := s.Connection.Search(searchRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create an empty goldapps.Group slice
+	privilegedUsers := make([]goldapps.User, 0)
+
+	for _, group := range groups.Entries {
+		// TODO: What qualified as a privileged group should be made configurable. See FIXME:s
+		if group.GetAttributeValue("type") != "Committee" /* FIXME */ {
+			continue // Only Committees are considered privileged groups
+		}
+
+		cn := group.GetAttributeValue("cn")
+		// Check if RDN is the same as the groups parent. FIXME
+		if strings.HasPrefix(group.DN, fmt.Sprintf("cn=%s,ou=%s", cn, cn)) {
+			for _, member := range group.GetAttributeValues("member") {
+				for _, user := range parsePrivilegedGroupMember(member, users, groups.Entries) {
+					privilegedUsers = append(privilegedUsers, goldapps.User{
+						// TODO: Make these attribute values configurable
+						Cid:           user.GetAttributeValue("uid"),
+						Nick:          user.GetAttributeValue("nickname"),
+						FirstName:     user.GetAttributeValue("givenName"),
+						SecondName:    user.GetAttributeValue("sn"),
+						GdprEducation: false, // TODO
+					})
+				}
+			}
+		}
+	}
+
+	return privilegedUsers, nil
+}
+
+// Recursively parse member tree and return users
+func parsePrivilegedGroupMember(memberDN string, users []*ldap.Entry, groups []*ldap.Entry) ([]*ldap.Entry) {
+	res := make([]*ldap.Entry, 0)
+	if dnIsUser(memberDN) {
+		for _, user := range users {
+			if user.DN == memberDN {
+				res = append(res, user)
+				break
+			}
+		}
+	} else {
+		for _, group := range groups {
+			if group.DN == memberDN {
+				for _, subMember := range group.GetAttributeValues("member") {
+					res = append(res, parsePrivilegedGroupMember(subMember, users, groups)...)
+				}
+				break
+			}
+		}
+	}
+	return res
 }
 
 // Collects all committees from LDAP and then creates a
@@ -187,7 +259,7 @@ func (s ServiceLDAP) GetCustomGroups() ([]goldapps.Group, error) {
 					entry.BaseDN, // The base dn to search
 					ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 					strings.Replace(entry.ParentFilter, "%childRDN%", getRDN(member.DN), -1), // The filter to apply
-					entry.Attributes, // A list attributes to retrieve
+					entry.Attributes,                                                         // A list attributes to retrieve
 					nil,
 				)
 
