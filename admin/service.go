@@ -223,7 +223,12 @@ func (s googleService) GetGroups() ([]goldapps.Group, error) {
 }
 
 func (s googleService) AddUser(user goldapps.User) error {
-	_, err := s.google.Users.Insert(buildGoldappsUser(user, s.domain)).Do()
+
+	usr := buildGoldappsUser(user, s.domain)
+	usr.Password = user.PasswordHash
+	usr.HashFunction = user.HashFunction
+
+	_, err := s.google.Users.Insert(usr).Do()
 	if err != nil {
 		return err
 	}
@@ -383,8 +388,6 @@ func buildGoldappsUser(user goldapps.User, domain string) *admin.User {
 		},
 		IncludeInGlobalAddressList: true,
 		PrimaryEmail:               fmt.Sprintf("%s@%s", user.Cid, domain),
-		Password:                   "RandomPassword", // Todo: how to do with passwords?
-		ChangePasswordAtNextLogin:  true,
 		Suspended:                  !user.GdprEducation,
 		SuspensionReason:           gdprSuspensionText,
 	}
