@@ -4,11 +4,13 @@ import (
 	"github.com/cthit/goldapps"
 
 	"google.golang.org/api/admin/directory/v1" // Imports as admin
+	"google.golang.org/api/gmail/v1"           // Imports as gmail
 
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
 
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"strings"
@@ -19,13 +21,17 @@ const gdprSuspensionText = "You have not attended the GDPR education!"
 
 const googleDuplicateEntryError = "googleapi: Error 409: Entity already exists., duplicate"
 
+const passwordMailBody = "Here is your password: %s"
+const passwordMailSubject = "Login details for google services at chalmers.it"
+
 // my_customer seems to work...
 const googleCustomer = "my_customer"
 
 type googleService struct {
-	google *admin.Service
-	admin  string
-	domain string
+	adminService *admin.Service
+	mailService  *gmail.Service
+	admin        string
+	domain       string
 }
 
 func NewGoogleService(keyPath string, adminMail string) (goldapps.UpdateService, error) {
@@ -52,22 +58,46 @@ func NewGoogleService(keyPath string, adminMail string) (goldapps.UpdateService,
 		return nil, err
 	}
 
+	mailService, err := gmail.New(client)
+	if err != nil {
+		return nil, err
+	}
+
 	// Extract account and mail
 	s := strings.Split(adminMail, "@")
 	admin := s[0]
 	domain := s[1]
 
 	gs := googleService{
-		google: service,
-		admin:  admin,
-		domain: domain,
+		adminService: service,
+		mailService:  mailService,
+		admin:        admin,
+		domain:       domain,
 	}
 
 	return gs, nil
 }
 
+func (g googleService) sendPassword(to string, password string) error {
+
+	from := "no-reply@" + g.domain
+	body := fmt.Sprintf(passwordMailBody, password)
+
+	msgRaw := "From: " + from + "\r\n" +
+		"To: " + to + "\r\n" +
+		"Subject: " + passwordMailSubject + "\r\n\r\n" +
+		body + "\r\n"
+
+	msg := &gmail.Message{
+		Raw: base64.StdEncoding.EncodeToString([]byte(msgRaw)),
+	}
+	_, err := g.mailService.Users.Messages.Send(from, msg).Do()
+
+	return err
+}
+
 func (s googleService) DeleteGroup(group goldapps.Group) error {
-	err := s.google.Groups.Delete(group.Email).Do()
+	err := s.adminService.Groups.Delete(group.Email).Do()
 	return err
 }
 
@@ -86,7 +116,7 @@ func (s googleService) UpdateGroup(groupUpdate goldapps.GroupUpdate) error {
 			}
 		}
 		if !exists {
-			_, err := s.google.Members.Insert(groupUpdate.Before.Email, &admin.Member{Email: member}).Do()
+			_, err := s.adminService.Members.Insert(groupUpdate.Before.Email, &admin.Member{Email: member}).Do()
 			if err != nil {
 				fmt.Printf("Failed to add menber %s\n", member)
 				return err
@@ -104,7 +134,7 @@ func (s googleService) UpdateGroup(groupUpdate goldapps.GroupUpdate) error {
 			}
 		}
 		if !keep {
-			err := s.google.Members.Delete(groupUpdate.Before.Email, existingMember).Do()
+			err := s.adminService.Members.Delete(groupUpdate.Before.Email, existingMember).Do()
 			if err != nil {
 				return err
 			}
@@ -121,7 +151,7 @@ func (s googleService) UpdateGroup(groupUpdate goldapps.GroupUpdate) error {
 			}
 		}
 		if !exists {
-			_, err := s.google.Groups.Aliases.Insert(groupUpdate.Before.Email, &admin.Alias{Alias: alias}).Do()
+			_, err := s.adminService.Groups.Aliases.Insert(groupUpdate.Before.Email, &admin.Alias{Alias: alias}).Do()
 			if err != nil {
 				return err
 			}
@@ -138,14 +168,14 @@ func (s googleService) UpdateGroup(groupUpdate goldapps.GroupUpdate) error {
 			}
 		}
 		if !keep {
-			err := s.google.Groups.Aliases.Delete(groupUpdate.Before.Email, existingAlias).Do()
+			err := s.adminService.Groups.Aliases.Delete(groupUpdate.Before.Email, existingAlias).Do()
 			if err != nil {
 				return err
 			}
 		}
 	}
 
-	_, err := s.google.Groups.Update(groupUpdate.Before.Email, &newGroup).Do()
+	_, err := s.adminService.Groups.Update(groupUpdate.Before.Email, &newGroup).Do()
 	return err
 }
 
@@ -154,7 +184,7 @@ func (s googleService) AddGroup(group goldapps.Group) error {
 		Email: group.Email,
 	}
 
-	_, err := s.google.Groups.Insert(&newGroup).Do()
+	_, err := s.adminService.Groups.Insert(&newGroup).Do()
 	if err != nil {
 		return err
 	}
@@ -163,7 +193,7 @@ func (s googleService) AddGroup(group goldapps.Group) error {
 
 	// Add members
 	for _, member := range group.Members {
-		_, err := s.google.Members.Insert(group.Email, &admin.Member{Email: member}).Do()
+		_, err := s.adminService.Members.Insert(group.Email, &admin.Member{Email: member}).Do()
 		if err != nil {
 			return err
 		}
@@ -171,7 +201,7 @@ func (s googleService) AddGroup(group goldapps.Group) error {
 
 	// Add Aliases
 	for _, alias := range group.Aliases {
-		_, err := s.google.Groups.Aliases.Insert(group.Email, &admin.Alias{Alias: alias}).Do()
+		_, err := s.adminService.Groups.Aliases.Insert(group.Email, &admin.Alias{Alias: alias}).Do()
 		if err != nil {
 			return err
 		}
@@ -225,14 +255,18 @@ func (s googleService) GetGroups() ([]goldapps.Group, error) {
 func (s googleService) AddUser(user goldapps.User) error {
 
 	usr := buildGoldappsUser(user, s.domain)
-	// FIXME:
-	// usr.Password = user.PasswordHash
-	// usr.HashFunction = user.HashFunction
 
-	_, err := s.google.Users.Insert(usr).Do()
+	password := newPassword()
+
+	usr.Password = password
+	usr.ChangePasswordAtNextLogin = true
+
+	_, err := s.adminService.Users.Insert(usr).Do()
 	if err != nil {
 		return err
 	}
+
+	//s.sendPassword(user.Mail, password)
 
 	// Google needs time for the addition to propagate
 	time.Sleep(time.Second)
@@ -242,7 +276,7 @@ func (s googleService) AddUser(user goldapps.User) error {
 }
 
 func (s googleService) UpdateUser(update goldapps.UserUpdate) error {
-	_, err := s.google.Users.Update(
+	_, err := s.adminService.Users.Update(
 		fmt.Sprintf("%s@%s", update.Before.Cid, s.domain),
 		buildGoldappsUser(update.After, s.domain),
 	).Do()
@@ -261,7 +295,7 @@ func (s googleService) DeleteUser(user goldapps.User) error {
 		fmt.Printf("Skipping andmin user: %s\n", admin)
 	}
 
-	err := s.google.Users.Delete(userId).Do()
+	err := s.adminService.Users.Delete(userId).Do()
 	return err
 }
 
@@ -306,13 +340,13 @@ func (s googleService) GetUsers() ([]goldapps.User, error) {
 }
 
 func (s googleService) getGoogleGroups(customer string) ([]admin.Group, error) {
-	groups, err := s.google.Groups.List().Customer(customer).Do()
+	groups, err := s.adminService.Groups.List().Customer(customer).Do()
 	if err != nil {
 		return nil, err
 	}
 
 	for groups.NextPageToken != "" {
-		newGroups, err := s.google.Groups.List().Customer(customer).PageToken(groups.NextPageToken).Do()
+		newGroups, err := s.adminService.Groups.List().Customer(customer).PageToken(groups.NextPageToken).Do()
 		if err != nil {
 			return nil, err
 		}
@@ -330,7 +364,7 @@ func (s googleService) getGoogleGroups(customer string) ([]admin.Group, error) {
 }
 
 func (s googleService) getGoogleGroupMembers(email string) ([]string, error) {
-	members, err := s.google.Members.List(email).Do()
+	members, err := s.adminService.Members.List(email).Do()
 	if err != nil {
 		return nil, err
 	}
@@ -344,13 +378,13 @@ func (s googleService) getGoogleGroupMembers(email string) ([]string, error) {
 }
 
 func (s googleService) getGoogleUsers(customer string) ([]admin.User, error) {
-	users, err := s.google.Users.List().Customer(customer).Do()
+	users, err := s.adminService.Users.List().Customer(customer).Do()
 	if err != nil {
 		return nil, err
 	}
 
 	for users.NextPageToken != "" {
-		newUsers, err := s.google.Users.List().Customer(customer).PageToken(users.NextPageToken).Do()
+		newUsers, err := s.adminService.Users.List().Customer(customer).PageToken(users.NextPageToken).Do()
 		if err != nil {
 			return nil, err
 		}
@@ -368,7 +402,7 @@ func (s googleService) getGoogleUsers(customer string) ([]admin.User, error) {
 }
 
 func (s googleService) addUserAlias(userKey string, alias string) error {
-	_, err := s.google.Users.Aliases.Insert(userKey, &admin.Alias{
+	_, err := s.adminService.Users.Aliases.Insert(userKey, &admin.Alias{
 		Alias: alias,
 	}).Do()
 	if err != nil {
