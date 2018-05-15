@@ -9,6 +9,7 @@ type User struct {
 	FirstName     string `json:"first_name"`
 	SecondName    string `json:"second_name"`
 	Nick          string `json:"nick"`
+	Mail          string `json:"mail"`
 	GdprEducation bool   `json:"gdpr_education"`
 }
 
@@ -26,6 +27,10 @@ func (user User) equals(other User) bool {
 	}
 
 	if user.Nick != other.Nick {
+		return false
+	}
+
+	if user.Mail != other.Mail {
 		return false
 	}
 

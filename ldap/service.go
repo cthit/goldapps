@@ -127,7 +127,8 @@ func (s ServiceLDAP) GetUsers() ([]goldapps.User, error) {
 						Nick:          user.GetAttributeValue("nickname"),
 						FirstName:     user.GetAttributeValue("givenName"),
 						SecondName:    user.GetAttributeValue("sn"),
-						GdprEducation: false, // TODO
+						Mail:          user.GetAttributeValue("mail"),
+						GdprEducation: user.GetAttributeValue("gdprEducated") == "TRUE",
 					})
 				}
 			}

@@ -21,7 +21,7 @@
 [ldap.users]
 	basedn = "ou=people,dc=chalmers,dc=it"
 	filter = "(&(objectClass=chalmersstudent))"
-	attributes = ["uid", "givenName", "sn", "nickname", "mail"]
+	attributes = ["uid", "givenName", "sn", "nickname", "mail", "gdprEducated"]
 
 #### CUSTOM FILTERS ####
 [ldap.fkit]
