@@ -16,7 +16,7 @@
 [ldap.groups]
 	basedn = "ou=groups,dc=chalmers,dc=it"
 	filter = "(|(objectClass=itGroup)(objectClass=itPosition))"
-	attributes = ["cn", "displayName", "mail", "member"]
+	attributes = ["cn", "displayName", "mail", "member", "type"]
 
 [ldap.users]
 	basedn = "ou=people,dc=chalmers,dc=it"
