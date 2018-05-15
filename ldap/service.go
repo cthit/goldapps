@@ -257,6 +257,11 @@ func (s ServiceLDAP) GetGroups() ([]goldapps.Group, error) {
 }
 
 func (s ServiceLDAP) GetCustomGroups() ([]goldapps.Group, error) {
+	users, err := s.users()
+	if err != nil {
+		return nil, err
+	}
+
 	customGroups := make([]goldapps.Group, 0)
 
 	for _, entry := range s.CustomEntryConfigs {
@@ -308,9 +313,21 @@ func (s ServiceLDAP) GetCustomGroups() ([]goldapps.Group, error) {
 
 			if addMember {
 				mail := member.GetAttributeValue("mail")
-				if mail != "" {
-					members = append(members, mail)
+				localMembers := member.GetAttributeValues("member")
+				// Check if the found entry has a mail associated with it
+				if mail == "" { // if not it should have members which do
+					for _, localMember := range localMembers {
+						mail = findEntry(users, localMember).GetAttributeValue("mail")
+						//fmt.Println(mail)
+						members = append(members, mail)
+					}
+				} else {
+					mail := member.GetAttributeValue("mail")
+					if mail != "" {
+						members = append(members, mail)
+					}
 				}
+
 			}
 		}
 
