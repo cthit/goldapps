@@ -80,7 +80,7 @@ func NewGoogleService(keyPath string, adminMail string) (goldapps.UpdateService,
 
 func (g googleService) sendPassword(to string, password string) error {
 
-	from := "no-reply@" + g.domain
+	from := g.admin + "@" + g.domain
 	body := fmt.Sprintf(passwordMailBody, password)
 
 	msgRaw := "From: " + from + "\r\n" +
@@ -266,7 +266,10 @@ func (s googleService) AddUser(user goldapps.User) error {
 		return err
 	}
 
-	//s.sendPassword(user.Mail, password)
+	err = s.sendPassword(user.Mail, password)
+	if err != nil {
+		return err
+	}
 
 	// Google needs time for the addition to propagate
 	time.Sleep(time.Second)
