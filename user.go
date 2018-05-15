@@ -30,9 +30,9 @@ func (user User) equals(other User) bool {
 		return false
 	}
 
-	if user.Mail != other.Mail {
+	/*if user.Mail != other.Mail {
 		return false
-	}
+	}*/
 
 	if user.GdprEducation != other.GdprEducation {
 		return false
