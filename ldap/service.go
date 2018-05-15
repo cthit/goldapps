@@ -193,7 +193,12 @@ func (s ServiceLDAP) GetGroups() ([]goldapps.Group, error) {
 		// Creates a goldapps.Group with it's mail
 		committee := goldapps.Group{
 			Email:   entry.GetAttributeValue("mail"),
+			Type:    entry.GetAttributeValue("type"),
 			Members: nil,
+		}
+
+		if committee.Email == "" {
+			continue
 		}
 
 		// Creates an empty members slice
@@ -222,11 +227,30 @@ func (s ServiceLDAP) GetGroups() ([]goldapps.Group, error) {
 		groups = append(groups, committee)
 	}
 
+	// Dear god just please let me die
+	// TODO: FIXME: Refactor this, please.
+	for _, group := range groups {
+		if group.Type == "Committee" {
+			for _, subGroup := range groups {
+				for _, memberEmail := range group.Members {
+					if subGroup.Email == memberEmail {
+						for i, userMail := range subGroup.Members {
+							for _, user := range users {
+								if userMail == user.GetAttributeValue("mail") {
+									subGroup.Members[i] = user.GetAttributeValue("uid") + "@chalmers.it"
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
 	customGroups, err := s.GetCustomGroups()
 	if err != nil {
 		return nil, err
 	}
-
 	groups = append(groups, customGroups...)
 
 	return groups, nil
@@ -259,6 +283,7 @@ func (s ServiceLDAP) GetCustomGroups() ([]goldapps.Group, error) {
 				parentSearchRequest := ldap.NewSearchRequest(
 					entry.BaseDN, // The base dn to search
 					ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+					// FIXME: The %childRDN% is only necessary since year groups (e.g. snit14) are the same type as their Committee/Society.
 					strings.Replace(entry.ParentFilter, "%childRDN%", getRDN(member.DN), -1), // The filter to apply
 					entry.Attributes,                                                         // A list attributes to retrieve
 					nil,
