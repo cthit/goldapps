@@ -3,10 +3,10 @@ package ldap
 import (
 	"crypto/tls"
 
+	"fmt"
 	"github.com/cthit/goldapps"
 	"gopkg.in/ldap.v2"
 	"strings"
-	"fmt"
 )
 
 type ServiceLDAP struct {
@@ -108,7 +108,7 @@ func (s ServiceLDAP) GetUsers() ([]goldapps.User, error) {
 	}
 
 	// Create an empty goldapps.Group slice
-	privilegedUsers := make([]goldapps.User, 0)
+	privilegedUsers := make(goldapps.Users, 0)
 
 	for _, group := range groups.Entries {
 		// TODO: What qualified as a privileged group should be made configurable. See FIXME:s
@@ -121,15 +121,18 @@ func (s ServiceLDAP) GetUsers() ([]goldapps.User, error) {
 		if strings.HasPrefix(group.DN, fmt.Sprintf("cn=%s,ou=%s", cn, cn)) {
 			for _, member := range group.GetAttributeValues("member") {
 				for _, user := range parsePrivilegedGroupMember(member, users, groups.Entries) {
-					privilegedUsers = append(privilegedUsers, goldapps.User{
-						// TODO: Make these attribute values configurable
-						Cid:           user.GetAttributeValue("uid"),
-						Nick:          user.GetAttributeValue("nickname"),
-						FirstName:     user.GetAttributeValue("givenName"),
-						SecondName:    user.GetAttributeValue("sn"),
-						Mail:          user.GetAttributeValue("mail"),
-						GdprEducation: user.GetAttributeValue("gdprEducated") == "TRUE",
-					})
+					if !privilegedUsers.Contains(user.GetAttributeValue("uid")) {
+						privilegedUsers = append(privilegedUsers, goldapps.User{
+							// TODO: Make these attribute values configurable
+							Cid:           user.GetAttributeValue("uid"),
+							Nick:          user.GetAttributeValue("nickname"),
+							FirstName:     user.GetAttributeValue("givenName"),
+							SecondName:    user.GetAttributeValue("sn"),
+							Mail:          user.GetAttributeValue("mail"),
+							GdprEducation: user.GetAttributeValue("gdprEducated") == "TRUE",
+						})
+						fmt.Println(user.GetAttributeValue("uid"))
+					}
 				}
 			}
 		}
@@ -139,7 +142,7 @@ func (s ServiceLDAP) GetUsers() ([]goldapps.User, error) {
 }
 
 // Recursively parse member tree and return users
-func parsePrivilegedGroupMember(memberDN string, users []*ldap.Entry, groups []*ldap.Entry) ([]*ldap.Entry) {
+func parsePrivilegedGroupMember(memberDN string, users []*ldap.Entry, groups []*ldap.Entry) []*ldap.Entry {
 	res := make([]*ldap.Entry, 0)
 	if dnIsUser(memberDN) {
 		for _, user := range users {
@@ -290,7 +293,7 @@ func (s ServiceLDAP) GetCustomGroups() ([]goldapps.Group, error) {
 					ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 					// FIXME: The %childRDN% is only necessary since year groups (e.g. snit14) are the same type as their Committee/Society.
 					strings.Replace(entry.ParentFilter, "%childRDN%", getRDN(member.DN), -1), // The filter to apply
-					entry.Attributes,                                                         // A list attributes to retrieve
+					entry.Attributes, // A list attributes to retrieve
 					nil,
 				)
 

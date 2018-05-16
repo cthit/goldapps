@@ -13,6 +13,17 @@ type User struct {
 	GdprEducation bool   `json:"gdpr_education"`
 }
 
+type Users []User
+
+func (users Users) Contains(cid string) bool {
+	for _, user := range users {
+		if user.Cid == cid {
+			return true
+		}
+	}
+	return false
+}
+
 func (user User) equals(other User) bool {
 	if strings.ToLower(user.Cid) != strings.ToLower(other.Cid) {
 		return false
