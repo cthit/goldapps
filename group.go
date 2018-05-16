@@ -13,6 +13,17 @@ type Group struct {
 	Aliases []string `json:"aliases"`
 }
 
+type Groups []Group
+
+func (groups Groups) Contains(email string) bool {
+	for _, group := range groups {
+		if group.Email == email {
+			return true
+		}
+	}
+	return false
+}
+
 func (group Group) equals(other Group) bool {
 	if strings.ToLower(group.Email) != strings.ToLower(other.Email) {
 		return false

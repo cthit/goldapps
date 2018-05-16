@@ -30,7 +30,7 @@ func main() {
 
 	var err error
 
-	var providerGroups []goldapps.Group
+	var providerGroups goldapps.Groups
 	if !flags.onlyUsers {
 		fmt.Println("Collecting groups from the provider...")
 		providerGroups, err = provider.GetGroups()
@@ -41,7 +41,7 @@ func main() {
 		fmt.Printf("%d groups collected.\n", len(providerGroups))
 	}
 
-	var providerUsers []goldapps.User
+	var providerUsers goldapps.Users
 	if !flags.onlyGroups {
 		fmt.Println("Collecting users from the provider...")
 		providerUsers, err = provider.GetUsers()
@@ -72,6 +72,28 @@ func main() {
 			panic(err)
 		}
 		fmt.Printf("%d users collected.\n", len(consumerUsers))
+	}
+
+	fmt.Println("Collecting additions")
+	additionUsers, additionGroups := getAdditions()
+	if additionUsers != nil && additionGroups != nil {
+		fmt.Printf("%d usersAdditions and %d groupAdditions collected.\n", len(additionUsers), len(additionGroups))
+		fmt.Print("Adding groups... ")
+		for _, group := range additionGroups {
+			if !providerGroups.Contains(group.Email) {
+				providerGroups = append(providerGroups, group)
+			}
+		}
+		fmt.Println("Done!")
+		fmt.Print("Adding users...  ")
+		for _, user := range additionUsers {
+			if !providerUsers.Contains(user.Cid) {
+				providerUsers = append(providerUsers, user)
+			}
+		}
+		fmt.Println("Done!")
+	} else {
+		fmt.Println("Skipping additions")
 	}
 
 	groupChanges := goldapps.GroupActions{}
@@ -255,6 +277,42 @@ func getUserChanges(proposedChanges goldapps.UserActions) goldapps.UserActions {
 		}
 	}
 	return proposedChanges
+}
+
+func getAdditions() ([]goldapps.User, []goldapps.Group) {
+
+	var from string
+	if flags.interactive {
+		from = askString("Which file would you like to use for additions?, Just press enter to skip", "")
+	} else {
+		from = flags.additions
+	}
+
+	if from == "" {
+		return nil, nil
+	}
+
+	isJson, _ := regexp.MatchString(`.+\.json$`, from)
+	if isJson {
+		provider, _ := json.NewJsonService(from)
+		groups, err := provider.GetGroups()
+		if err != nil {
+			panic(err)
+		}
+		users, err := provider.GetUsers()
+		if err != nil {
+			panic(err)
+		}
+		return users, groups
+	} else {
+		fmt.Println("You must specify a valid json file")
+		previous := flags.interactive
+		flags.interactive = true
+		defer func() {
+			flags.interactive = previous
+		}()
+		return getAdditions()
+	}
 }
 
 func getConsumer() goldapps.UpdateService {
