@@ -131,7 +131,6 @@ func (s ServiceLDAP) GetUsers() ([]goldapps.User, error) {
 							Mail:          user.GetAttributeValue("mail"),
 							GdprEducation: user.GetAttributeValue("gdprEducated") == "TRUE",
 						})
-						fmt.Println(user.GetAttributeValue("uid"))
 					}
 				}
 			}
@@ -230,6 +229,12 @@ func (s ServiceLDAP) GetGroups() ([]goldapps.Group, error) {
 		groups = append(groups, committee)
 	}
 
+	customGroups, err := s.GetCustomGroups()
+	if err != nil {
+		return nil, err
+	}
+	groups = append(groups, customGroups...)
+
 	// Dear god just please let me die
 	// TODO: FIXME: Refactor this, please.
 	for _, group := range groups {
@@ -249,12 +254,6 @@ func (s ServiceLDAP) GetGroups() ([]goldapps.Group, error) {
 			}
 		}
 	}
-
-	customGroups, err := s.GetCustomGroups()
-	if err != nil {
-		return nil, err
-	}
-	groups = append(groups, customGroups...)
 
 	return groups, nil
 }
