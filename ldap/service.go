@@ -235,6 +235,12 @@ func (s ServiceLDAP) GetGroups() ([]goldapps.Group, error) {
 	}
 	groups = append(groups, customGroups...)
 
+	positionGroups, err := s.getPositionGroups()
+	if err != nil {
+		return nil, err
+	}
+	groups = append(groups, positionGroups...)
+
 	// Dear god just please let me die
 	// TODO: FIXME: Refactor this, please.
 	for _, group := range groups {
@@ -250,6 +256,31 @@ func (s ServiceLDAP) GetGroups() ([]goldapps.Group, error) {
 							}
 						}
 					}
+				}
+			}
+		}
+	}
+
+	//FIXME!!!
+	// See above comments (only two for loops :D)
+	// Fulhack deluxe :ok_hand:
+	// this is fine....
+	for _, group := range groups {
+		if group.Type == "CommitteeDirect" {
+			for i, member := range group.Members {
+				replacementFound := false
+				xusers, err := s.GetUsers() // Åh nej...
+				if err != nil {
+					return nil, err
+				}
+				for _, user := range xusers {
+					if user.Mail == member {
+						replacementFound = true
+						group.Members[i] = user.Cid + "@chalmers.it"
+					}
+				}
+				if !replacementFound {
+					return nil, fmt.Errorf("no replacement could be found for %s", member)
 				}
 			}
 		}
@@ -344,6 +375,55 @@ func (s ServiceLDAP) GetCustomGroups() ([]goldapps.Group, error) {
 	return customGroups, nil
 }
 
+func (s ServiceLDAP) getPositionGroups() ([]goldapps.Group, error) {
+	users, err := s.users()
+	if err != nil {
+		return nil, err
+	}
+
+	var positionGroups []goldapps.Group
+
+
+
+	searchRequest := ldap.NewSearchRequest(
+		"ou=fkit,ou=groups,dc=chalmers,dc=it", // The base dn to search
+		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+		"(&(objectClass=itPosition))",     // The filter to apply
+		[]string{"cn", "member"}, // A list attributes to retrieve
+		nil,
+	)
+
+	result, err := s.Connection.Search(searchRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, entry := range result.Entries {
+		groupType, err := dnPositionType(s, entry.DN)
+		DnSplit := strings.SplitN(entry.DN, ",", 3)
+		pos := DnSplit[0][3:]
+		grp := DnSplit[1][3:]
+		if err != nil {
+			return nil, err
+		}
+
+		posGroup := goldapps.Group{
+			Email:   fmt.Sprintf("%s.%s@chalmers.it", pos, grp),
+			Type:    groupType + "Direct",
+		}
+
+		for _, member := range entry.GetAttributeValues("member") {
+			mail := findEntry(users, member).GetAttributeValue("mail")
+			posGroup.Members = append(posGroup.Members, mail)
+		}
+
+		positionGroups = append(positionGroups,posGroup)
+
+	}
+	return positionGroups, nil
+
+}
+
 func findEntry(ldapEntries []*ldap.Entry, DN string) *ldap.Entry {
 	for _, entry := range ldapEntries {
 		if entry.DN == DN {
@@ -363,4 +443,22 @@ func dnIsParentOf(parent string, node string) bool {
 
 func dnIsUser(DN string) bool {
 	return len(DN) >= 4 && DN[0:4] == "uid="
+}
+
+func dnPositionType(s ServiceLDAP, DN string) (string, error) {
+	newDN := strings.SplitN(DN, ",", 2)[1] // Creates the dn for the group
+	sr := ldap.NewSearchRequest(
+		newDN, // The base dn to search
+		ldap.ScopeBaseObject, ldap.NeverDerefAliases, 0, 0, false,
+		"(&(objectClass=*))",     // The filter to apply
+		[]string{"type"}, // A list attributes to retrieve
+		nil,
+	)
+
+	result, err := s.Connection.Search(sr)
+	if err != nil {
+		return "", err
+	}
+
+	return result.Entries[0].GetAttributeValue("type"), nil
 }
