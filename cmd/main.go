@@ -80,14 +80,65 @@ func main() {
 		fmt.Printf("%d usersAdditions and %d groupAdditions collected.\n", len(additionUsers), len(additionGroups))
 		fmt.Print("Adding groups... ")
 		for _, group := range additionGroups {
-			if !providerGroups.Contains(group.Email) {
+			found := false
+			for i, pgroup := range providerGroups {
+				if pgroup.Email == group.Email {
+					found = true
+
+					for _, alias := range group.Aliases {
+						aliasFound := false
+						for _, other := range pgroup.Aliases {
+							if other == alias {
+								aliasFound = true
+							}
+						}
+						if !aliasFound {
+							providerGroups[i].Aliases = append(pgroup.Aliases, alias)
+						}
+					}
+
+					for _, member := range group.Members {
+						memberFound := false
+						for _, other := range pgroup.Members {
+							if other == member {
+								memberFound = true
+							}
+						}
+						if !memberFound {
+							providerGroups[i].Members = append(pgroup.Members, member)
+						}
+					}
+				}
+			}
+			if !found {
 				providerGroups = append(providerGroups, group)
 			}
 		}
 		fmt.Println("Done!")
 		fmt.Print("Adding users...  ")
 		for _, user := range additionUsers {
-			if !providerUsers.Contains(user.Cid) {
+			found := false
+			for i, pUser := range providerUsers {
+				if pUser.Cid == user.Cid {
+					found = true
+					if user.Nick != "" {
+						providerUsers[i].Nick = user.Nick
+					}
+					if user.SecondName != "" {
+						providerUsers[i].SecondName = user.SecondName
+					}
+					if user.FirstName != "" {
+						providerUsers[i].FirstName = user.FirstName
+					}
+					if user.Mail != "" {
+						providerUsers[i].Mail = user.Mail
+					}
+					if user.GdprEducation {
+						providerUsers[i].GdprEducation = user.GdprEducation
+					}
+				}
+			}
+			if !found {
 				providerUsers = append(providerUsers, user)
 			}
 		}
