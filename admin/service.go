@@ -21,7 +21,7 @@ const gdprSuspensionText = "You have not attended the GDPR education!"
 
 const googleDuplicateEntryError = "googleapi: Error 409: Entity already exists., duplicate"
 
-const passwordMailBody = "Here is your password: %s"
+const passwordMailBody = "Action required! You are a member of a committee at the IT-section and have therefor been provided a google-account by the section. Login within the following week to setup two-factor-authentication or you might get locked out from your account. You can login on any google service such as gmail.google.com or drive.google.com with cid@chalmers.it and your provided password: %s"
 const passwordMailSubject = "Login details for google services at chalmers.it"
 
 // my_customer seems to work...
