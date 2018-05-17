@@ -147,6 +147,9 @@ func main() {
 		fmt.Println("Skipping additions")
 	}
 
+	// Check for and handle duplicates
+	providerUsers, providerGroups = goldapps.CheckDuplicates(providerUsers, providerGroups)
+
 	groupChanges := goldapps.GroupActions{}
 	if !flags.onlyUsers {
 		fmt.Println("Colculating difference between the consumer and provider groups.")
