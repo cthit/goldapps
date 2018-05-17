@@ -28,9 +28,7 @@ func (group Group) equals(other Group) bool {
 	if strings.ToLower(group.Email) != strings.ToLower(other.Email) {
 		return false
 	}
-	if group.Type != other.Type {
-		return false
-	}
+
 	if len(group.Members) != len(other.Members) {
 		return false
 	}
