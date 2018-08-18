@@ -45,9 +45,9 @@ func (user User) equals(other User) bool {
 		return false
 	}*/
 
-	if user.GdprEducation != other.GdprEducation {
+	/*if user.GdprEducation != other.GdprEducation {
 		return false
-	}
+	}*/
 
 	/*
 		Do not check PasswordHash nor HashFunction
