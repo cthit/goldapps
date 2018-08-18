@@ -9,7 +9,7 @@ RUN apk add --update git
 
 # Copy sources
 RUN mkdir -p $GOPATH/src/github.com/cthit/goldapps
-COPY . $GOPATH/src/github.com/cthit/goldapps
+COPY ./src/github.com/cthit/goldapps $GOPATH/src/github.com/cthit/goldapps
 WORKDIR $GOPATH/src/github.com/cthit/goldapps/cmd
 
 # Grab dependencies

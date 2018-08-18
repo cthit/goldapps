@@ -1,6 +1,6 @@
 package json
 
-import "github.com/cthit/goldapps"
+import "../../goldapps"
 
 type data struct {
 	Groups []goldapps.Group `json:"groups"`

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/cthit/goldapps/ldap"
+	"../ldap"
 	"github.com/spf13/viper"
 )
 

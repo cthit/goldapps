@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 
 	"fmt"
-	"github.com/cthit/goldapps"
+	"../../goldapps"
 	"gopkg.in/ldap.v2"
 	"strings"
 )

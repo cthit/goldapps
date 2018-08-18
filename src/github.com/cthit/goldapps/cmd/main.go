@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/cthit/goldapps"
-	"github.com/cthit/goldapps/admin"
-	"github.com/cthit/goldapps/json"
-	"github.com/spf13/viper"
 	"regexp"
+
+	"github.com/spf13/viper"
+
+	"../../goldapps"
+	"../admin"
+	"../json"
 )
 
 func init() {

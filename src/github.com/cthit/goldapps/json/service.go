@@ -3,7 +3,7 @@ package json
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cthit/goldapps"
+	"../../goldapps"
 	"io/ioutil"
 )
 
