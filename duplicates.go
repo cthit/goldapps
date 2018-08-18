@@ -8,22 +8,25 @@ func CheckDuplicates(users Users, groups Groups) (Users, Groups) {
 
 	// User <-> Group
 	for i, user := range users {
-		for j, group := range groups {
-			if strings.ToLower(user.Cid+"@chalmers.it") == strings.ToLower(group.Email) { // check cid with group mail
-				panic(user.Cid + "@chalmers.it" + "==" + group.Email) // panic, this is bad
+		deleted := 0
+		for j := range groups {
+			k := j - deleted
+			if strings.ToLower(user.Cid+"@chalmers.it") == strings.ToLower(groups[k].Email) { // check cid with group mail
+				panic(user.Cid + "@chalmers.it" + "==" + groups[k].Email) // panic, this is bad
 			}
-			if strings.ToLower(user.Nick+"@chalmers.it") == strings.ToLower(group.Email) { // check nick with group mail
-				if len(group.Members) == 1 && strings.SplitN(group.Members[0], "@", 2)[1] != "chalmers.it" { // special case for digit pateter.
-					// Remove element without breaking the loop?
-					groups = append(append(groups[:j], groups[len(groups)-1]), groups[j+1:len(groups)-1]...)
+			if strings.ToLower(user.Nick+"@chalmers.it") == strings.ToLower(groups[k].Email) { // check nick with group mail
+				if len(groups[k].Members) == 1 && strings.SplitN(groups[k].Members[0], "@", 2)[1] != "chalmers.it" { // special case for digit pateter.
+					// Remove element without breaking the loop or list
+					groups = groups[:k+copy(groups[k:], groups[k+1:])]
+					deleted++
 				} else {
 					users[i].Nick = "" // Simply remove the conflicting Nick
 				}
 			}
 
-			for _, alias := range group.Aliases {
+			for _, alias := range groups[k].Aliases {
 				if strings.ToLower(user.Cid+"@chalmers.it") == strings.ToLower(alias) { // check cid with all aliases
-					panic(user.Cid + "@chalmers.it" + "==" + group.Email) // panic, this is bad
+					panic(user.Cid + "@chalmers.it" + "==" + groups[k].Email) // panic, this is bad
 				}
 				if strings.ToLower(user.Nick+"@chalmers.it") == strings.ToLower(alias) { // check nick with all aliases
 					users[i].Nick = "" // Remove nick because it's stupid
