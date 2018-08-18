@@ -7,8 +7,8 @@ import (
 
 func newPassword() string {
 	numbers := rand.Intn(10) + 5
-	symbols := rand.Intn(10) + 5
-	pass, err := password.Generate(64, numbers, symbols, false, true)
+	//symbols := rand.Intn(10) + 5
+	pass, err := password.Generate(64, numbers, 0, false, true)
 	if err != nil {
 		panic("Password generation failed")
 	}
