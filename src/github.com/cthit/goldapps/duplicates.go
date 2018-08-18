@@ -8,17 +8,15 @@ func CheckDuplicates(users Users, groups Groups) (Users, Groups) {
 
 	// User <-> Group
 	for i, user := range users {
-		deleted := 0
-		for j := range groups {
-			k := j - deleted
+		for k := 0; k < len(groups); k++ {
 			if strings.ToLower(user.Cid+"@chalmers.it") == strings.ToLower(groups[k].Email) { // check cid with group mail
 				panic(user.Cid + "@chalmers.it" + "==" + groups[k].Email) // panic, this is bad
 			}
 			if strings.ToLower(user.Nick+"@chalmers.it") == strings.ToLower(groups[k].Email) { // check nick with group mail
 				if len(groups[k].Members) == 1 && strings.SplitN(groups[k].Members[0], "@", 2)[1] != "chalmers.it" { // special case for digit pateter.
-					// Remove element without breaking the loop or list
-					groups = groups[:k+copy(groups[k:], groups[k+1:])]
-					deleted++
+					
+					groups = remove(groups, k)
+					k-- // dont breaking the loop
 				} else {
 					users[i].Nick = "" // Simply remove the conflicting Nick
 				}
@@ -74,4 +72,9 @@ func CheckDuplicates(users Users, groups Groups) (Users, Groups) {
 		}
 	}
 	return users, groups
+}
+
+func remove(s Groups, i int) Groups {
+	s[len(s)-1], s[i] = s[i], s[len(s)-1]
+	return s[:len(s)-1]
 }
