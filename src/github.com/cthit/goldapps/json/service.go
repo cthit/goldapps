@@ -5,10 +5,16 @@ import (
 	"fmt"
 	"../../goldapps"
 	"io/ioutil"
+	"os"
 )
 
 type Service struct {
 	path string
+}
+
+type dataObject struct {
+	Groups []goldapps.Group `json:"groups"`
+	Users  []goldapps.User  `json:"users"`
 }
 
 func (s Service) DeleteUser(user goldapps.User) error {
@@ -23,7 +29,7 @@ func (s Service) DeleteUser(user goldapps.User) error {
 
 	for i, u := range users {
 		if u.Cid == user.Cid {
-			err = s.save(data{
+			err = s.save(dataObject{
 				groups,
 				append(users[:i], users[i+1:]...),
 			})
@@ -45,7 +51,7 @@ func (s Service) UpdateUser(update goldapps.UserUpdate) error {
 
 	for i, u := range users {
 		if u.Cid == update.Before.Cid {
-			err = s.save(data{
+			err = s.save(dataObject{
 				groups,
 				append(append(users[:i], update.After), users[i+1:]...),
 			})
@@ -67,7 +73,7 @@ func (s Service) AddUser(user goldapps.User) error {
 
 	users = append(users, user)
 
-	err = s.save(data{
+	err = s.save(dataObject{
 		groups,
 		users,
 	})
@@ -76,13 +82,7 @@ func (s Service) AddUser(user goldapps.User) error {
 
 func (s Service) GetUsers() ([]goldapps.User, error) {
 
-	bytes, err := ioutil.ReadFile(s.path)
-	if err != nil {
-		return nil, err
-	}
-
-	var data data
-	err = json.Unmarshal(bytes, &data)
+	data, err := s.get()
 	if err != nil {
 		return nil, err
 	}
@@ -91,16 +91,48 @@ func (s Service) GetUsers() ([]goldapps.User, error) {
 }
 
 func NewJsonService(path string) (Service, error) {
+
+	// Check if file exists
+	_, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		// Create file
+		_, err := os.Create("path")
+		if err != nil {
+			return Service{}, err
+		}
+		// Write empty object to file
+		err = Service{path:path}.save(dataObject{})
+		if err != nil {
+			return Service{}, err
+		}
+	}
+
 	return Service{
 		path: path,
 	}, nil
 }
 
-func (s Service) save(data data) error {
+func (s Service) save(data dataObject) error {
 	json, _ := json.Marshal(data)
 
 	err := ioutil.WriteFile(s.path, json, 0666)
 	return err
+}
+
+func (s Service) get() (dataObject, error) {
+
+	bytes, err := ioutil.ReadFile(s.path)
+	if err != nil {
+		return dataObject{}, err
+	}
+
+	var data dataObject
+	err = json.Unmarshal(bytes, &data)
+	if err != nil {
+		return dataObject{}, err
+	}
+
+	return data, nil
 }
 
 func (s Service) DeleteGroup(group goldapps.Group) error {
@@ -115,7 +147,7 @@ func (s Service) DeleteGroup(group goldapps.Group) error {
 
 	for i, g := range groups {
 		if g.Email == group.Email {
-			err = s.save(data{append(groups[:i], groups[i+1:]...),
+			err = s.save(dataObject{append(groups[:i], groups[i+1:]...),
 				users,
 			})
 			return err
@@ -136,7 +168,7 @@ func (s Service) UpdateGroup(groupUpdate goldapps.GroupUpdate) error {
 
 	for i, g := range groups {
 		if g.Email == groupUpdate.Before.Email {
-			err = s.save(data{
+			err = s.save(dataObject{
 				append(append(groups[:i], groupUpdate.After), groups[i+1:]...),
 				users,
 			})
@@ -158,7 +190,7 @@ func (s Service) AddGroup(group goldapps.Group) error {
 
 	groups = append(groups, group)
 
-	err = s.save(data{
+	err = s.save(dataObject{
 		groups,
 		users,
 	})
@@ -167,13 +199,7 @@ func (s Service) AddGroup(group goldapps.Group) error {
 
 func (s Service) GetGroups() ([]goldapps.Group, error) {
 
-	bytes, err := ioutil.ReadFile(s.path)
-	if err != nil {
-		return nil, err
-	}
-
-	var data data
-	err = json.Unmarshal(bytes, &data)
+	data, err := s.get()
 	if err != nil {
 		return nil, err
 	}
