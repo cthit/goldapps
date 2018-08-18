@@ -6,9 +6,9 @@ import (
 
 	"github.com/spf13/viper"
 
-	"../../goldapps"
 	"../admin"
 	"../json"
+	"../../goldapps"
 )
 
 func init() {
@@ -150,7 +150,7 @@ func main() {
 	}
 
 	// Check for and handle duplicates
-	providerUsers, providerGroups = goldapps.CheckDuplicates(providerUsers, providerGroups)
+	providerUsers, providerGroups = goldapps.RemoveDuplicates(providerUsers, providerGroups)
 
 	groupChanges := goldapps.GroupActions{}
 	if !flags.onlyUsers {

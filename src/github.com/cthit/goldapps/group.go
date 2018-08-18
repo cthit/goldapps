@@ -7,10 +7,11 @@ import "strings"
 // Members is a lost of email addresses that are members of this group.
 // Aliases are alternative email addresses for the group.
 type Group struct {
-	Email   string   `json:"email"`
-	Type    string   `json:"type"`
-	Members []string `json:"members"`
-	Aliases []string `json:"aliases"`
+	Email      string   `json:"email"`
+	Type       string   `json:"type"`
+	Members    []string `json:"members"`
+	Aliases    []string `json:"aliases"`
+	Expendable bool     `json:"expendable"`
 }
 
 type Groups []Group

@@ -4,67 +4,103 @@ import (
 	"strings"
 )
 
-func CheckDuplicates(users Users, groups Groups) (Users, Groups) {
+func RemoveDuplicates(users Users, groups Groups) (Users, Groups) {
 
-	// User <-> Group
+	// Compare Users with Groups
 	for i, user := range users {
 		for k := 0; k < len(groups); k++ {
-			if strings.ToLower(user.Cid+"@chalmers.it") == strings.ToLower(groups[k].Email) { // check cid with group mail
-				panic(user.Cid + "@chalmers.it" + "==" + groups[k].Email) // panic, this is bad
-			}
-			if strings.ToLower(user.Nick+"@chalmers.it") == strings.ToLower(groups[k].Email) { // check nick with group mail
-				if len(groups[k].Members) == 1 && strings.SplitN(groups[k].Members[0], "@", 2)[1] != "chalmers.it" { // special case for digit pateter.
-					
-					groups = remove(groups, k)
-					k-- // dont breaking the loop
+			// Check if any cid conflicts with any group name
+			if strings.ToLower(user.Cid) == extractIdentifier(groups[k].Email) {
+				if groups[k].Expendable {
+					groups = removeArrayGroup(groups, k)
+					k-- // don't breaking the loop
 				} else {
-					users[i].Nick = "" // Simply remove the conflicting Nick
+					// No good strategy exists, simply panic and let admins handle the situation
+					// This would probably also cause tremendous problems in other applications
+					panic(user.Cid + "==" + extractIdentifier(groups[k].Email))
+				}
+			}
+			// Check if any user nick conflicts with any group name
+			if strings.ToLower(user.Nick) == extractIdentifier(groups[k].Email) {
+				if groups[k].Expendable {
+					groups = removeArrayGroup(groups, k)
+					k-- // don't breaking the loop
+				} else {
+					// Nicks are not that important
+					users[i].Nick = ""
 				}
 			}
 
-			for _, alias := range groups[k].Aliases {
-				if strings.ToLower(user.Cid+"@chalmers.it") == strings.ToLower(alias) { // check cid with all aliases
-					panic(user.Cid + "@chalmers.it" + "==" + groups[k].Email) // panic, this is bad
+			for aliasIndex, alias := range groups[k].Aliases {
+				// Check if any cid conflicts with any group alias
+				if strings.ToLower(user.Cid) == extractIdentifier(alias) {
+					if groups[k].Expendable {
+						groups[k] = removeAlias(groups[k], aliasIndex)
+					} else {
+						// No good strategy exists, simply panic and let admins handle the situation
+						// This would probably also cause tremendous problems in other applications
+						panic(user.Cid + "== (alias)" + extractIdentifier(groups[k].Email))
+					}
 				}
-				if strings.ToLower(user.Nick+"@chalmers.it") == strings.ToLower(alias) { // check nick with all aliases
-					users[i].Nick = "" // Remove nick because it's stupid
+				// Check if any Nick conflicts with any group alias
+				if strings.ToLower(user.Nick) == extractIdentifier(alias) {
+					if groups[k].Expendable {
+						groups[k] = removeAlias(groups[k], aliasIndex)
+					} else {
+						// Nicks are not that important
+						users[i].Nick = ""
+					}
 				}
 			}
 		}
 	}
 
-	// User <-> User
+	// Compare Users with Users
 	for i, user := range users {
-		for j, other := range users {
-			if i != j { // Don't check with itself
-				if strings.ToLower(user.Cid) == strings.ToLower(other.Cid) { // cid vs cid
-					panic("two users with cid: " + user.Cid) // this shouldn't happen
+		for j, otherUser := range users {
+			// Don't check with itself
+			if i != j {
+				// Compare cids
+				if strings.ToLower(user.Cid) == strings.ToLower(otherUser.Cid) {
+					// Should not be able to happen
+					panic("two users with cid: " + user.Cid)
 				}
-				if strings.ToLower(user.Nick) == strings.ToLower(other.Nick) { // don't compete over nicks
+				// Compare Nicks
+				if strings.ToLower(user.Nick) == strings.ToLower(otherUser.Nick) {
+					// Nicks are not that important
 					users[i].Nick = ""
 					users[j].Nick = ""
 				}
-				if strings.ToLower(user.Cid) == strings.ToLower(other.Nick) { // cid vs nick
-					users[j].Nick = "" // cid takes precedence
+				// Compare cids with nicks
+				if strings.ToLower(user.Cid) == strings.ToLower(otherUser.Nick) {
+					// Nicks are not that important
+					users[j].Nick = ""
 				}
 			}
 		}
 	}
 
-	// Group <-> group
+	// Compare Groups with Groups
 	for i, group := range groups {
-		for j, other := range groups {
-			if i != j { // don't check with itself
-				if strings.ToLower(group.Email) == strings.ToLower(other.Email) { // mail vs mail
-					panic("two groups with email: " + group.Email) // panic, something is set up wrong
+		for j, otherGroup := range groups {
+			// Don't check with itself
+			if i != j {
+				// Compare Emails
+				if strings.ToLower(group.Email) == strings.ToLower(otherGroup.Email) {
+					// Something is set up wrong
+					panic("two groups with email: " + group.Email)
 				}
 				for _, alias := range group.Aliases {
-					if strings.ToLower(alias) == strings.ToLower(other.Email) { //email vs alias
-						panic("two groups with alias/email: " + group.Email + ", " + other.Email) // panic, something is set up wrong
+					// Compare emails with aliases
+					if strings.ToLower(alias) == strings.ToLower(otherGroup.Email) {
+						// Something is set up wrong
+						panic("two groups with alias/email: " + group.Email + ", " + otherGroup.Email)
 					}
-					for _, oalias := range other.Aliases {
-						if strings.ToLower(alias) == strings.ToLower(oalias) { // alias vs alias
-							panic("two groups with alias: " + alias) // panic, something is set up wrong
+					for _, otherAlias := range otherGroup.Aliases {
+						// Compare aliases with aliases
+						if strings.ToLower(alias) == strings.ToLower(otherAlias) {
+							// Something is set up wrong
+							panic("two groups with alias: " + alias)
 						}
 					}
 				}
@@ -74,7 +110,21 @@ func CheckDuplicates(users Users, groups Groups) (Users, Groups) {
 	return users, groups
 }
 
-func remove(s Groups, i int) Groups {
+func removeArrayGroup(s Groups, i int) Groups {
 	s[len(s)-1], s[i] = s[i], s[len(s)-1]
 	return s[:len(s)-1]
+}
+
+func removeArrayString(s []string, i int) []string {
+	s[len(s)-1], s[i] = s[i], s[len(s)-1]
+	return s[:len(s)-1]
+}
+
+func removeAlias(group Group, aliasIndex int) Group {
+	group.Aliases = removeArrayString(group.Aliases, aliasIndex)
+	return group
+}
+
+func extractIdentifier(email string) string {
+	return strings.ToLower(strings.Split(email, "@")[0])
 }
