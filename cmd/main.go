@@ -199,14 +199,14 @@ func main() {
 			fmt.Printf("\t\t Performed %d out of %d Additions\n", len(groupChangesPerformed.Additions), len(groupChanges.Additions))
 			fmt.Printf("\t\t Performed %d out of %d Deletions\n", len(groupChangesPerformed.Deletions), len(groupChanges.Deletions))
 			fmt.Printf("\t\t Performed %d out of %d Updates\n", len(groupChangesPerformed.Updates), len(groupChanges.Updates))
-			fmt.Printf("\t\t Error: %s", err1.Error())
+			fmt.Printf("\t\t Error: %s\n", err1.Error())
 		}
 		if err2 != nil {
 			fmt.Printf("\t For users:\n")
 			fmt.Printf("\t\t Performed %d out of %d Additions\n", len(userChangesPerformed.Additions), len(userChanges.Additions))
 			fmt.Printf("\t\t Performed %d out of %d Deletions\n", len(userChangesPerformed.Deletions), len(userChanges.Deletions))
 			fmt.Printf("\t\t Performed %d out of %d Updates\n", len(userChangesPerformed.Updates), len(userChanges.Updates))
-			fmt.Printf("\t\t Error: %s", err2.Error())
+			fmt.Printf("\t\t Error: %s\n", err2.Error())
 		}
 	}
 }
