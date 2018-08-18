@@ -12,4 +12,5 @@ func Scopes() []string {
 		gmail.GmailSendScope,
 	}
 }
+
 // https://www.googleapis.com/auth/admin.directory.group, https://www.googleapis.com/auth/admin.directory.user

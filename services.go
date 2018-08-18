@@ -12,5 +12,5 @@ type UpdateService interface {
 
 type CollectionService interface {
 	GetGroups() ([]Group, error)
-	GetUsers()  ([]User, error)
+	GetUsers() ([]User, error)
 }
