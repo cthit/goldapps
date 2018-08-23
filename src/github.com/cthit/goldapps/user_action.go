@@ -109,12 +109,11 @@ func UserActionsRequired(old []User, new []User) UserActions {
 	for _, newUser := range new {
 		exists := false
 		for _, oldUser := range old {
-			// identify by Cid
-			if newUser.Cid == oldUser.Cid {
+			if newUser.Same(oldUser) {
 				// User exists
 				exists = true
 				// check if user has to be updates
-				if !newUser.equals(oldUser) {
+				if !newUser.Equals(oldUser) {
 					// Add User update
 					requiredActions.Updates = append(requiredActions.Updates, UserUpdate{
 						Before: oldUser,
@@ -135,7 +134,7 @@ func UserActionsRequired(old []User, new []User) UserActions {
 		// check if user should be removed
 		removed := true
 		for _, newUser := range new {
-			if oldUser.Cid == newUser.Cid {
+			if oldUser.Same(newUser) {
 				removed = false
 				break
 			}

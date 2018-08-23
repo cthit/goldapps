@@ -1,7 +1,5 @@
 package goldapps
 
-import "strings"
-
 // Represents a email group.
 // Email is the id and main email for the group.
 // Members is a lost of email addresses that are members of this group.
@@ -26,8 +24,12 @@ func (groups Groups) Contains(email string) bool {
 	return false
 }
 
-func (group Group) equals(other Group) bool {
-	if strings.ToLower(group.Email) != strings.ToLower(other.Email) {
+func (group Group) Same(other Group) bool {
+	return CompareEmails(group.Email, other.Email)
+}
+
+func (group Group) Equals(other Group) bool {
+	if !group.Same(other) {
 		return false
 	}
 
@@ -37,7 +39,7 @@ func (group Group) equals(other Group) bool {
 	for _, member := range group.Members {
 		contains := false
 		for _, otherMember := range other.Members {
-			if strings.ToLower(member) == strings.ToLower(otherMember) {
+			if CompareEmails(member, otherMember) {
 				contains = true
 				break
 			}
@@ -53,7 +55,7 @@ func (group Group) equals(other Group) bool {
 	for _, alias := range group.Aliases {
 		contains := false
 		for _, otherAlias := range other.Aliases {
-			if strings.ToLower(alias) == strings.ToLower(otherAlias) {
+			if CompareEmails(alias, otherAlias) {
 				contains = true
 				break
 			}

@@ -10,7 +10,7 @@ func RemoveDuplicates(users Users, groups Groups) (Users, Groups) {
 	for i, user := range users {
 		for k := 0; k < len(groups); k++ {
 			// Check if any cid conflicts with any group name
-			if strings.ToLower(user.Cid) == extractIdentifier(groups[k].Email) {
+			if CompareEmails(user.Cid, extractIdentifier(groups[k].Email)) {
 				if groups[k].Expendable {
 					groups = removeArrayGroup(groups, k)
 					k-- // don't breaking the loop
@@ -21,7 +21,7 @@ func RemoveDuplicates(users Users, groups Groups) (Users, Groups) {
 				}
 			}
 			// Check if any user nick conflicts with any group name
-			if strings.ToLower(user.Nick) == extractIdentifier(groups[k].Email) {
+			if CompareEmails(user.Nick, extractIdentifier(groups[k].Email)) {
 				if groups[k].Expendable {
 					groups = removeArrayGroup(groups, k)
 					k-- // don't breaking the loop
@@ -33,7 +33,7 @@ func RemoveDuplicates(users Users, groups Groups) (Users, Groups) {
 
 			for aliasIndex, alias := range groups[k].Aliases {
 				// Check if any cid conflicts with any group alias
-				if strings.ToLower(user.Cid) == extractIdentifier(alias) {
+				if CompareEmails(user.Cid, extractIdentifier(alias)) {
 					if groups[k].Expendable {
 						groups[k] = removeAlias(groups[k], aliasIndex)
 					} else {
@@ -43,7 +43,7 @@ func RemoveDuplicates(users Users, groups Groups) (Users, Groups) {
 					}
 				}
 				// Check if any Nick conflicts with any group alias
-				if strings.ToLower(user.Nick) == extractIdentifier(alias) {
+				if CompareEmails(user.Nick, extractIdentifier(alias)) {
 					if groups[k].Expendable {
 						groups[k] = removeAlias(groups[k], aliasIndex)
 					} else {
@@ -61,18 +61,18 @@ func RemoveDuplicates(users Users, groups Groups) (Users, Groups) {
 			// Don't check with itself
 			if i != j {
 				// Compare cids
-				if strings.ToLower(user.Cid) == strings.ToLower(otherUser.Cid) {
+				if CompareEmails(user.Cid, otherUser.Cid) {
 					// Should not be able to happen
 					panic("two users with cid: " + user.Cid)
 				}
 				// Compare Nicks
-				if strings.ToLower(user.Nick) == strings.ToLower(otherUser.Nick) {
+				if CompareEmails(user.Nick, otherUser.Nick) {
 					// Nicks are not that important
 					users[i].Nick = ""
 					users[j].Nick = ""
 				}
 				// Compare cids with nicks
-				if strings.ToLower(user.Cid) == strings.ToLower(otherUser.Nick) {
+				if CompareEmails(user.Cid, otherUser.Nick) {
 					// Nicks are not that important
 					users[j].Nick = ""
 				}
@@ -86,19 +86,19 @@ func RemoveDuplicates(users Users, groups Groups) (Users, Groups) {
 			// Don't check with itself
 			if i != j {
 				// Compare Emails
-				if strings.ToLower(group.Email) == strings.ToLower(otherGroup.Email) {
+				if CompareEmails(group.Email, otherGroup.Email) {
 					// Something is set up wrong
 					panic("two groups with email: " + group.Email)
 				}
 				for _, alias := range group.Aliases {
 					// Compare emails with aliases
-					if strings.ToLower(alias) == strings.ToLower(otherGroup.Email) {
+					if CompareEmails(alias, otherGroup.Email) {
 						// Something is set up wrong
 						panic("two groups with alias/email: " + group.Email + ", " + otherGroup.Email)
 					}
 					for _, otherAlias := range otherGroup.Aliases {
 						// Compare aliases with aliases
-						if strings.ToLower(alias) == strings.ToLower(otherAlias) {
+						if CompareEmails(alias, otherAlias) {
 							// Something is set up wrong
 							panic("two groups with alias: " + alias)
 						}
@@ -126,5 +126,5 @@ func removeAlias(group Group, aliasIndex int) Group {
 }
 
 func extractIdentifier(email string) string {
-	return strings.ToLower(strings.Split(email, "@")[0])
+	return strings.Split(email, "@")[0]
 }

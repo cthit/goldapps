@@ -24,8 +24,12 @@ func (users Users) Contains(cid string) bool {
 	return false
 }
 
-func (user User) equals(other User) bool {
-	if strings.ToLower(user.Cid) != strings.ToLower(other.Cid) {
+func (user User) Same(other User) bool {
+	return strings.ToLower(user.Cid) == strings.ToLower(other.Cid)
+}
+
+func (user User) Equals(other User) bool {
+	if !user.Same(other) {
 		return false
 	}
 
@@ -37,7 +41,7 @@ func (user User) equals(other User) bool {
 		return false
 	}
 
-	if user.Nick != other.Nick {
+	if SanitizeEmail(user.Nick) != SanitizeEmail(other.Nick) { // Because google uses nick for mail
 		return false
 	}
 

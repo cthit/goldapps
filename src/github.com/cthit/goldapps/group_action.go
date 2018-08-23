@@ -110,11 +110,11 @@ func GroupActionsRequired(old []Group, new []Group) GroupActions {
 		exists := false
 		for _, oldGroup := range old {
 			// identify by Email
-			if newGroup.Email == oldGroup.Email {
+			if newGroup.Same(oldGroup) {
 				// Groups exists
 				exists = true
 				// check if group has to be updates
-				if !newGroup.equals(oldGroup) {
+				if !newGroup.Equals(oldGroup) {
 					// Add group update
 					requiredActions.Updates = append(requiredActions.Updates, GroupUpdate{
 						Before: oldGroup,
@@ -135,7 +135,7 @@ func GroupActionsRequired(old []Group, new []Group) GroupActions {
 		// check if group should be removed
 		removed := true
 		for _, newGroup := range new {
-			if oldGroup.Email == newGroup.Email {
+			if oldGroup.Same(newGroup) {
 				removed = false
 				break
 			}
