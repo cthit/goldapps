@@ -2,7 +2,7 @@ package admin
 
 import (
 	"google.golang.org/api/admin/directory/v1" // Imports as admin
-	"github.com/cthit/goldapps"
+	"../../goldapps"
 	"time"
 	"fmt"
 	"strings"
