@@ -5,16 +5,16 @@ import (
 )
 
 type User struct {
-	Cid           string `json:"cid"`
-	FirstName     string `json:"first_name"`
-	SecondName    string `json:"second_name"`
-	Nick          string `json:"nick"`
-	Mail          string `json:"mail"`
-	GdprEducation bool   `json:"gdpr_education"`
+	Cid        string `json:"cid"`
+	FirstName  string `json:"first_name"`
+	SecondName string `json:"second_name"`
+	Nick       string `json:"nick"`
+	Mail       string `json:"mail"`
 }
 
 type Users []User
 
+// Search for username(cid) in list of groups
 func (users Users) Contains(cid string) bool {
 	for _, user := range users {
 		if user.Cid == cid {
@@ -41,17 +41,10 @@ func (user User) equals(other User) bool {
 		return false
 	}
 
+	// Don't check email as its not saved in every consumer atm
 	/*if user.Mail != other.Mail {
 		return false
 	}*/
-
-	/*if user.GdprEducation != other.GdprEducation {
-		return false
-	}*/
-
-	/*
-		Do not check PasswordHash nor HashFunction
-	*/
 
 	return true
 }

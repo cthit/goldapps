@@ -1,9 +1,9 @@
 package json
 
 import (
+	"../../goldapps"
 	"encoding/json"
 	"fmt"
-	"../../goldapps"
 	"io/ioutil"
 	"os"
 )
@@ -101,7 +101,7 @@ func NewJsonService(path string) (Service, error) {
 			return Service{}, err
 		}
 		// Write empty object to file
-		err = Service{path:path}.save(dataObject{})
+		err = Service{path: path}.save(dataObject{})
 		if err != nil {
 			return Service{}, err
 		}

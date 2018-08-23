@@ -3,8 +3,8 @@ package ldap
 import (
 	"crypto/tls"
 
-	"fmt"
 	"../../goldapps"
+	"fmt"
 	"gopkg.in/ldap.v2"
 	"strings"
 )
@@ -122,15 +122,16 @@ func (s ServiceLDAP) GetUsers() ([]goldapps.User, error) {
 			for _, member := range group.GetAttributeValues("member") {
 				for _, user := range parsePrivilegedGroupMember(member, users, groups.Entries) {
 					if !privilegedUsers.Contains(user.GetAttributeValue("uid")) {
-						privilegedUsers = append(privilegedUsers, goldapps.User{
-							// TODO: Make these attribute values configurable
-							Cid:           user.GetAttributeValue("uid"),
-							Nick:          user.GetAttributeValue("nickname"),
-							FirstName:     user.GetAttributeValue("givenName"),
-							SecondName:    user.GetAttributeValue("sn"),
-							Mail:          user.GetAttributeValue("mail"),
-							GdprEducation: user.GetAttributeValue("gdprEducated") == "TRUE",
-						})
+						if user.GetAttributeValue("gdprEducated") == "TRUE" { // only add user if he's gdpr educated
+							privilegedUsers = append(privilegedUsers, goldapps.User{
+								// TODO: Make these attribute values configurable
+								Cid:           user.GetAttributeValue("uid"),
+								Nick:          user.GetAttributeValue("nickname"),
+								FirstName:     user.GetAttributeValue("givenName"),
+								SecondName:    user.GetAttributeValue("sn"),
+								Mail:          user.GetAttributeValue("mail"),
+							})
+						}
 					}
 				}
 			}

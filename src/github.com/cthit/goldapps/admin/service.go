@@ -17,8 +17,6 @@ import (
 	"time"
 )
 
-const gdprSuspensionText = "You have not attended the GDPR education!"
-
 const googleDuplicateEntryError = "googleapi: Error 409: Entity already exists., duplicate"
 
 const passwordMailBody = "Action required! You are a member of a committee at the IT-section and have therefor been provided a google-account by the section. Login within the following week to setup two-factor-authentication or you might get locked out from your account. You can login on any google service such as gmail.google.com or drive.google.com with cid@chalmers.it and your provided password: %s"
@@ -325,15 +323,11 @@ func (s googleService) GetUsers() ([]goldapps.User, error) {
 			// Extracting cid form (cid@example.ex)
 			cid := strings.Split(adminUser.PrimaryEmail, "@")[0]
 
-			// Check suspension and suspension reason to determine GDPR status
-			gdpr := !(adminUser.Suspended && adminUser.SuspensionReason == gdprSuspensionText)
-
 			users[i] = goldapps.User{
 				Cid:           cid,
 				FirstName:     firstName,
 				SecondName:    adminUser.Name.FamilyName,
 				Nick:          nick,
-				GdprEducation: gdpr,
 			}
 			i++
 		}
@@ -426,7 +420,5 @@ func buildGoldappsUser(user goldapps.User, domain string) *admin.User {
 		},
 		IncludeInGlobalAddressList: true,
 		PrimaryEmail:               fmt.Sprintf("%s@%s", user.Cid, domain),
-		Suspended:                  !user.GdprEducation,
-		SuspensionReason:           gdprSuspensionText,
 	}
 }
