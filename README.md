@@ -31,6 +31,7 @@ The following flags are available:
 * `-to someString`: Set the group consumer to 'gapps' or '*.json'. In case of `gapps` config value `gapps.consumer` will be used.
 * `-users`: Only collect and sync users
 * `-groups`: Only collect and sync groups
+* `-additions *.json`: file with additions
 
 
 Notice that flags should be combined on the form `goldapps -a -b` and **NOT** on the form `goldapps -ab`.
