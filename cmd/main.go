@@ -100,7 +100,7 @@ func main() {
 		fmt.Print(groupErrors.String())
 	}
 	if userErrors.Amount() == 0 {
-		fmt.Println("All groups actions performed!")
+		fmt.Println("All users actions performed!")
 	} else {
 		fmt.Printf("&d out of %d group actions performed\n", userChanges.Amount()-userErrors.Amount())
 		fmt.Print(userErrors.String())
@@ -116,21 +116,6 @@ func getGroupChanges(proposedChanges goldapps.GroupActions) goldapps.GroupAction
 			len(proposedChanges.Updates),
 		)
 	} else {
-		// Handle additions
-		fmt.Printf("(Groups) Additions (%d):\n", len(proposedChanges.Additions))
-		if len(proposedChanges.Additions) > 0 {
-			for _, group := range proposedChanges.Additions {
-				fmt.Printf("\t%v\n", group)
-			}
-			add := askBool(
-				fmt.Sprintf("(Groups) Do you want to commit those %d additions?", len(proposedChanges.Additions)),
-				true,
-			)
-			if !add {
-				proposedChanges.Additions = nil
-			}
-		}
-
 		// Handle Deletions
 		fmt.Printf("(Groups) Deletions (%d):\n", len(proposedChanges.Deletions))
 		if len(proposedChanges.Deletions) > 0 {
@@ -164,6 +149,21 @@ func getGroupChanges(proposedChanges goldapps.GroupActions) goldapps.GroupAction
 				proposedChanges.Updates = nil
 			}
 		}
+
+		// Handle additions
+		fmt.Printf("(Groups) Additions (%d):\n", len(proposedChanges.Additions))
+		if len(proposedChanges.Additions) > 0 {
+			for _, group := range proposedChanges.Additions {
+				fmt.Printf("\t%v\n", group)
+			}
+			add := askBool(
+				fmt.Sprintf("(Groups) Do you want to commit those %d additions?", len(proposedChanges.Additions)),
+				true,
+			)
+			if !add {
+				proposedChanges.Additions = nil
+			}
+		}
 	}
 	return proposedChanges
 }
@@ -177,21 +177,6 @@ func getUserChanges(proposedChanges goldapps.UserActions) goldapps.UserActions {
 			len(proposedChanges.Updates),
 		)
 	} else {
-		// Handle additions
-		fmt.Printf("(Users) Additions (%d):\n", len(proposedChanges.Additions))
-		if len(proposedChanges.Additions) > 0 {
-			for _, user := range proposedChanges.Additions {
-				fmt.Printf("\t%v\n", user)
-			}
-			add := askBool(
-				fmt.Sprintf("(Users) Do you want to commit those %d additions?", len(proposedChanges.Additions)),
-				true,
-			)
-			if !add {
-				proposedChanges.Additions = nil
-			}
-		}
-
 		// Handle Deletions
 		fmt.Printf("(Users) Deletions (%d):\n", len(proposedChanges.Deletions))
 		if len(proposedChanges.Deletions) > 0 {
@@ -225,6 +210,22 @@ func getUserChanges(proposedChanges goldapps.UserActions) goldapps.UserActions {
 				proposedChanges.Updates = nil
 			}
 		}
+
+		// Handle additions
+		fmt.Printf("(Users) Additions (%d):\n", len(proposedChanges.Additions))
+		if len(proposedChanges.Additions) > 0 {
+			for _, user := range proposedChanges.Additions {
+				fmt.Printf("\t%v\n", user)
+			}
+			add := askBool(
+				fmt.Sprintf("(Users) Do you want to commit those %d additions?", len(proposedChanges.Additions)),
+				true,
+			)
+			if !add {
+				proposedChanges.Additions = nil
+			}
+		}
+
 	}
 	return proposedChanges
 }
