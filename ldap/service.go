@@ -85,8 +85,12 @@ func (s ServiceLDAP) users() ([]*ldap.Entry, error) {
 	return result.Entries, nil
 }
 
-// Collect all users who are members of a committee
 func (s ServiceLDAP) GetUsers() ([]goldapps.User, error) {
+	return s.getUsers(true)
+}
+
+// Collect all users who are members of a committee
+func (s ServiceLDAP) getUsers(onlyPeopleWithGDPREducation bool) ([]goldapps.User, error) {
 	users, err := s.users()
 	if err != nil {
 		return nil, err
@@ -122,14 +126,14 @@ func (s ServiceLDAP) GetUsers() ([]goldapps.User, error) {
 			for _, member := range group.GetAttributeValues("member") {
 				for _, user := range parsePrivilegedGroupMember(member, users, groups.Entries) {
 					if !privilegedUsers.Contains(user.GetAttributeValue("uid")) {
-						if user.GetAttributeValue("gdprEducated") == "TRUE" { // only add user if he's gdpr educated
+						if !onlyPeopleWithGDPREducation || user.GetAttributeValue("gdprEducated") == "TRUE" { // only add user if he's gdpr educated
 							privilegedUsers = append(privilegedUsers, goldapps.User{
 								// TODO: Make these attribute values configurable
-								Cid:           user.GetAttributeValue("uid"),
-								Nick:          user.GetAttributeValue("nickname"),
-								FirstName:     user.GetAttributeValue("givenName"),
-								SecondName:    user.GetAttributeValue("sn"),
-								Mail:          user.GetAttributeValue("mail"),
+								Cid:        user.GetAttributeValue("uid"),
+								Nick:       user.GetAttributeValue("nickname"),
+								FirstName:  user.GetAttributeValue("givenName"),
+								SecondName: user.GetAttributeValue("sn"),
+								Mail:       user.GetAttributeValue("mail"),
 							})
 						}
 					}
@@ -293,14 +297,15 @@ func (s ServiceLDAP) GetGroups() ([]goldapps.Group, error) {
 	// See above comments (only two for loops :D)
 	// Fulhack deluxe :ok_hand:
 	// this is fine....
+
+	xusers, err := s.getUsers(false) // Åh nej...
+	if err != nil {
+		return nil, err
+	}
 	for _, group := range groups {
 		if group.Type == "CommitteeDirect" {
 			for i, member := range group.Members {
 				replacementFound := false
-				xusers, err := s.GetUsers() // Åh nej...
-				if err != nil {
-					return nil, err
-				}
 				for _, user := range xusers {
 					if user.Mail == member {
 						replacementFound = true
