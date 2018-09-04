@@ -1,11 +1,11 @@
 package admin
 
 import (
-	"google.golang.org/api/admin/directory/v1" // Imports as admin
-	"../../goldapps"
-	"time"
 	"fmt"
+	"github.com/cthit/goldapps"
+	"google.golang.org/api/admin/directory/v1" // Imports as admin
 	"strings"
+	"time"
 )
 
 func (s googleService) AddUser(user goldapps.User) error {
@@ -82,10 +82,10 @@ func (s googleService) GetUsers() ([]goldapps.User, error) {
 			cid := strings.Split(adminUser.PrimaryEmail, "@")[0]
 
 			users[i] = goldapps.User{
-				Cid:           cid,
-				FirstName:     firstName,
-				SecondName:    adminUser.Name.FamilyName,
-				Nick:          nick,
+				Cid:        cid,
+				FirstName:  firstName,
+				SecondName: adminUser.Name.FamilyName,
+				Nick:       nick,
 			}
 			i++
 		}

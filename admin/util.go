@@ -1,8 +1,8 @@
 package admin
 
 import (
-	"../../goldapps"
 	"fmt"
+	"github.com/cthit/goldapps"
 	"google.golang.org/api/admin/directory/v1" // Imports as admin
 )
 

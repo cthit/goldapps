@@ -1,11 +1,11 @@
 package admin
 
 import (
-	"google.golang.org/api/admin/directory/v1" // Imports as admin
-	"../../goldapps"
-	"fmt"
-	"time"
 	"bytes"
+	"fmt"
+	"github.com/cthit/goldapps"
+	"google.golang.org/api/admin/directory/v1" // Imports as admin
+	"time"
 )
 
 func (s googleService) DeleteGroup(group goldapps.Group) error {

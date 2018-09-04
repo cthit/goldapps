@@ -1,10 +1,10 @@
 package main
 
 import (
-	"../../goldapps"
-	"../json"
-	"regexp"
 	"fmt"
+	"github.com/cthit/goldapps"
+	"github.com/cthit/goldapps/json"
+	"regexp"
 )
 
 func addAdditions(providerGroups goldapps.Groups, providerUsers goldapps.Users) (goldapps.Groups, goldapps.Users) {
@@ -133,4 +133,3 @@ func mergeAdditionalUsers(additionUsers goldapps.Users, providerUsers goldapps.U
 	}
 	return providerUsers
 }
-

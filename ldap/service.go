@@ -3,8 +3,8 @@ package ldap
 import (
 	"crypto/tls"
 
-	"../../goldapps"
 	"fmt"
+	"github.com/cthit/goldapps"
 	"gopkg.in/ldap.v2"
 	"strings"
 )

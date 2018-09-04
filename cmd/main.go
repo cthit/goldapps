@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"../../goldapps"
+	"github.com/cthit/goldapps"
 )
 
 func init() {
@@ -96,13 +96,13 @@ func main() {
 	if groupErrors.Amount() == 0 {
 		fmt.Println("All groups actions performed!")
 	} else {
-		fmt.Printf("&d out of %d group actions performed\n", groupChanges.Amount()-groupErrors.Amount(), )
+		fmt.Printf("&d out of %d group actions performed\n", groupChanges.Amount()-groupErrors.Amount())
 		fmt.Print(groupErrors.String())
 	}
 	if userErrors.Amount() == 0 {
 		fmt.Println("All groups actions performed!")
 	} else {
-		fmt.Printf("&d out of %d group actions performed\n", userChanges.Amount()-userErrors.Amount(), )
+		fmt.Printf("&d out of %d group actions performed\n", userChanges.Amount()-userErrors.Amount())
 		fmt.Print(userErrors.String())
 	}
 }
@@ -228,4 +228,3 @@ func getUserChanges(proposedChanges goldapps.UserActions) goldapps.UserActions {
 	}
 	return proposedChanges
 }
-

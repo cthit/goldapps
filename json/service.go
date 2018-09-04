@@ -1,9 +1,9 @@
 package json
 
 import (
-	"../../goldapps"
 	"encoding/json"
 	"fmt"
+	"github.com/cthit/goldapps"
 	"io/ioutil"
 	"os"
 )

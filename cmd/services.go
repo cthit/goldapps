@@ -1,15 +1,14 @@
 package main
 
 import (
-	"../ldap"
-	"../json"
-	"../admin"
-	"github.com/spf13/viper"
-	"../../goldapps"
 	"fmt"
+	"github.com/cthit/goldapps"
+	"github.com/cthit/goldapps/admin"
+	"github.com/cthit/goldapps/json"
+	"github.com/cthit/goldapps/ldap"
+	"github.com/spf13/viper"
 	"regexp"
 )
-
 
 func getConsumer() goldapps.UpdateService {
 	var to string
@@ -86,7 +85,7 @@ func getProvider() goldapps.CollectionService {
 	}
 }
 
-func collectGroups(service goldapps.CollectionService) (goldapps.Groups) {
+func collectGroups(service goldapps.CollectionService) goldapps.Groups {
 	groups, err := service.GetGroups()
 	if err != nil {
 		fmt.Println("Failed to collect groups")
@@ -96,7 +95,7 @@ func collectGroups(service goldapps.CollectionService) (goldapps.Groups) {
 	return groups
 }
 
-func collectUsers(service goldapps.CollectionService) (goldapps.Users) {
+func collectUsers(service goldapps.CollectionService) goldapps.Users {
 	users, err := service.GetUsers()
 	if err != nil {
 		fmt.Println("Failed to collect users")
