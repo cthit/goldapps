@@ -86,11 +86,11 @@ func (s ServiceLDAP) users() ([]*ldap.Entry, error) {
 }
 
 func (s ServiceLDAP) GetUsers() ([]goldapps.User, error) {
-	return s.getUsers(true)
+	return s.getUsers()
 }
 
 // Collect all users who are members of a committee
-func (s ServiceLDAP) getUsers(onlyPeopleWithGDPREducation bool) ([]goldapps.User, error) {
+func (s ServiceLDAP) getUsers() ([]goldapps.User, error) {
 	users, err := s.users()
 	if err != nil {
 		return nil, err
@@ -126,9 +126,8 @@ func (s ServiceLDAP) getUsers(onlyPeopleWithGDPREducation bool) ([]goldapps.User
 			for _, member := range group.GetAttributeValues("member") {
 				for _, user := range parsePrivilegedGroupMember(member, users, groups.Entries) {
 					if !privilegedUsers.Contains(user.GetAttributeValue("uid")) {
-						if !onlyPeopleWithGDPREducation || user.GetAttributeValue("gdprEducated") == "TRUE" { // only add user if he's gdpr educated
+						if user.GetAttributeValue("gdprEducated") == "TRUE" { // only add user if he's gdpr educated
 							privilegedUsers = append(privilegedUsers, goldapps.User{
-								// TODO: Make these attribute values configurable
 								Cid:        user.GetAttributeValue("uid"),
 								Nick:       user.GetAttributeValue("nickname"),
 								FirstName:  user.GetAttributeValue("givenName"),
@@ -273,53 +272,47 @@ func (s ServiceLDAP) GetGroups() ([]goldapps.Group, error) {
 		Members: treasurersGroupMembers,
 	})
 
-	// Dear god just please let me die
-	// TODO: FIXME: Refactor this, please.
-	for _, group := range groups {
-		if group.Type == "Committee" {
-			for _, subGroup := range groups {
-				for _, memberEmail := range group.Members {
-					if subGroup.Email == memberEmail {
-						for i, userMail := range subGroup.Members {
-							for _, user := range users {
-								if userMail == user.GetAttributeValue("mail") {
-									subGroup.Members[i] = user.GetAttributeValue("uid") + "@chalmers.it"
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	//FIXME!!!
-	// See above comments (only two for loops :D)
-	// Fulhack deluxe :ok_hand:
-	// this is fine....
-
-	xusers, err := s.getUsers(false) // Åh nej...
+	accounts, err := s.getUsers()
 	if err != nil {
 		return nil, err
 	}
-	for _, group := range groups {
-		if group.Type == "CommitteeDirect" {
-			for i, member := range group.Members {
-				replacementFound := false
-				for _, user := range xusers {
-					if user.Mail == member {
-						replacementFound = true
-						group.Members[i] = user.Cid + "@chalmers.it"
+
+	for i, group := range groups {
+		if group.Type == "Committee" {
+			for _, comitteeGroupMemberEmail := range group.Members {
+
+				for j := range groups {
+					if groups[j].Email == comitteeGroupMemberEmail {
+						groups[j] = replaceWithAccountEmail(groups[j], accounts)
 					}
 				}
-				if !replacementFound {
-					return nil, fmt.Errorf("no replacement could be found for %s", member)
-				}
 			}
+		} else if groups[i].Type == "CommitteeDirect" {
+			groups[i] = replaceWithAccountEmail(groups[i], accounts)
 		}
 	}
 
 	return groups, nil
+}
+
+func replaceWithAccountEmail(group goldapps.Group, users goldapps.Users) goldapps.Group {
+	for i := 0; i < len(group.Members); i++ {
+		replacementFound := false
+		for _, user := range users {
+			if user.Mail == group.Members[i] {
+				replacementFound = true
+				group.Members[i] = user.Cid + "@chalmers.it"
+			}
+		}
+		if !replacementFound {
+			fmt.Printf("WARNING: no replacement could be found for %s in %s \n", group.Members[i], group.Email)
+
+			//Remove member
+			group.Members = append(group.Members[:i], group.Members[i+1:]...)
+			i--
+		}
+	}
+	return group
 }
 
 func (s ServiceLDAP) GetCustomGroups() ([]goldapps.Group, error) {
