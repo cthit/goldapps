@@ -96,13 +96,13 @@ func main() {
 	if groupErrors.Amount() == 0 {
 		fmt.Println("All groups actions performed!")
 	} else {
-		fmt.Printf("&d out of %d group actions performed\n", groupChanges.Amount()-groupErrors.Amount())
+		fmt.Printf("%d out of %d group actions performed\n", groupChanges.Amount()-groupErrors.Amount(), groupChanges.Amount())
 		fmt.Print(groupErrors.String())
 	}
 	if userErrors.Amount() == 0 {
 		fmt.Println("All users actions performed!")
 	} else {
-		fmt.Printf("&d out of %d group actions performed\n", userChanges.Amount()-userErrors.Amount())
+		fmt.Printf("%d out of %d group actions performed\n", userChanges.Amount()-userErrors.Amount(), groupChanges.Amount())
 		fmt.Print(userErrors.String())
 	}
 }
