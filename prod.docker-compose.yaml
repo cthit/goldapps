@@ -5,9 +5,11 @@ services:
       dockerfile: Dockerfile
       context: .
     image: goldapps:stable
-    command: -dry -y
-#    volumes:
-#      - some_config.toml:/app/config.toml:ro
-#      - google_api_key1.json:/app/gapps1.json:ro
-#      - google_api_key2.json:/app/gapps2.json:ro
-#      - data_for_json_groups:/app/data
+    restart: always
+    entrypoint: ./sleep_and_run.sh
+    command: ["-from ldap", "-to gapps", "-y", "-dry"]
+    volumes:
+      - ./cmd/config.toml:/app/config.toml:ro
+      - ./cmd/gapps.json:/app/gapps.json:ro
+    environment:
+      - WAIT=2d
