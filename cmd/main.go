@@ -89,8 +89,8 @@ func main() {
 	}
 
 	// Commit changes
-	groupErrors := groupChanges.Commit(consumer)
 	userErrors := userChanges.Commit(consumer)
+	groupErrors := groupChanges.Commit(consumer)
 
 	// Print result
 	if groupErrors.Amount() == 0 {

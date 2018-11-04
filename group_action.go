@@ -1,8 +1,8 @@
 package goldapps
 
 import (
-	"fmt"
 	"bytes"
+	"fmt"
 )
 
 // Set of action, to be performed on a set of groups
@@ -11,6 +11,7 @@ type GroupActions struct {
 	Additions []Group
 	Deletions []Group
 }
+
 func (actions GroupActions) Amount() int {
 	return len(actions.Additions) + len(actions.Deletions) + len(actions.Updates)
 }
@@ -29,18 +30,19 @@ type GroupAddOrDelError struct {
 	Action Group
 	Error  error
 }
+
 func (actions GroupActionErrors) Amount() int {
 	return len(actions.Additions) + len(actions.Deletions) + len(actions.Updates)
 }
 func (actions GroupActionErrors) String() string {
 	builder := bytes.Buffer{}
-	for _,deletion := range actions.Deletions  {
+	for _, deletion := range actions.Deletions {
 		builder.WriteString(fmt.Sprintf("Deletion of group \"%s\" failed with error %s\n", deletion.Action.Email, deletion.Error.Error()))
 	}
-	for _,update := range actions.Updates  {
+	for _, update := range actions.Updates {
 		builder.WriteString(fmt.Sprintf("Update of group \"%s\" failed with error %s\n", update.Action.After.Email, update.Error.Error()))
 	}
-	for _,addition := range actions.Additions  {
+	for _, addition := range actions.Additions {
 		builder.WriteString(fmt.Sprintf("Addition of group \"%s\" failed with error %s\n", addition.Action.Email, addition.Error.Error()))
 	}
 	return builder.String()
@@ -72,19 +74,6 @@ func (actions GroupActions) Commit(service UpdateService) GroupActionErrors {
 		}
 	}
 
-	if len(actions.Updates) > 0 {
-		fmt.Println("(Groups) Performing updates")
-		printProgress(0, len(actions.Updates), 0)
-		for updatesIndex, update := range actions.Updates {
-			err := service.UpdateGroup(update)
-			if err != nil {
-				// Save error
-				errors.Updates = append(errors.Updates, GroupUpdateError{Action: update, Error: err})
-			}
-			printProgress(updatesIndex+1, len(actions.Updates), len(errors.Updates))
-		}
-	}
-
 	if len(actions.Additions) > 0 {
 		fmt.Println("(Groups) Performing additions")
 		printProgress(0, len(actions.Additions), 0)
@@ -95,6 +84,19 @@ func (actions GroupActions) Commit(service UpdateService) GroupActionErrors {
 				errors.Additions = append(errors.Additions, GroupAddOrDelError{Action: group, Error: err})
 			}
 			printProgress(additionsIndex+1, len(actions.Additions), len(errors.Additions))
+		}
+	}
+
+	if len(actions.Updates) > 0 {
+		fmt.Println("(Groups) Performing updates")
+		printProgress(0, len(actions.Updates), 0)
+		for updatesIndex, update := range actions.Updates {
+			err := service.UpdateGroup(update)
+			if err != nil {
+				// Save error
+				errors.Updates = append(errors.Updates, GroupUpdateError{Action: update, Error: err})
+			}
+			printProgress(updatesIndex+1, len(actions.Updates), len(errors.Updates))
 		}
 	}
 
