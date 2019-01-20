@@ -31,12 +31,12 @@ func (s googleService) AddUser(user goldapps.User) error {
 	time.Sleep(time.Second)
 
 	// Add alias for nick@example.ex
-	return s.addUserAlias(fmt.Sprintf("%s@%s", user.Cid, s.domain), fmt.Sprintf("%s@%s", user.Nick, s.domain))
+	return s.addUserAlias(goldapps.SanitizeEmail(fmt.Sprintf("%s@%s", user.Cid, s.domain)), goldapps.SanitizeEmail(fmt.Sprintf("%s@%s", user.Nick, s.domain)))
 }
 
 func (s googleService) UpdateUser(update goldapps.UserUpdate) error {
 	_, err := s.adminService.Users.Update(
-		fmt.Sprintf("%s@%s", update.Before.Cid, s.domain),
+		goldapps.SanitizeEmail(fmt.Sprintf("%s@%s", update.Before.Cid, s.domain)),
 		buildGoldappsUser(update.After, s.domain),
 	).Do()
 	if err != nil {
@@ -44,12 +44,12 @@ func (s googleService) UpdateUser(update goldapps.UserUpdate) error {
 	}
 
 	// Add alias for nick@example.ex
-	return s.addUserAlias(fmt.Sprintf("%s@%s", update.After.Cid, s.domain), fmt.Sprintf("%s@%s", update.After.Nick, s.domain))
+	return s.addUserAlias(goldapps.SanitizeEmail(fmt.Sprintf("%s@%s", update.After.Cid, s.domain)), goldapps.SanitizeEmail(fmt.Sprintf("%s@%s", update.After.Nick, s.domain)))
 }
 
 func (s googleService) DeleteUser(user goldapps.User) error {
 	admin := fmt.Sprintf("%s@%s", s.admin, s.domain)
-	userId := fmt.Sprintf("%s@%s", user.Cid, s.domain)
+	userId := goldapps.SanitizeEmail(fmt.Sprintf("%s@%s", user.Cid, s.domain))
 	if admin == userId {
 		fmt.Printf("Skipping andmin user: %s\n", admin)
 	}
