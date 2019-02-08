@@ -13,6 +13,6 @@ func buildGoldappsUser(user goldapps.User, domain string) *admin.User {
 			GivenName:  fmt.Sprintf("%s / %s", user.Nick, user.FirstName),
 		},
 		IncludeInGlobalAddressList: true,
-		PrimaryEmail:               goldapps.SanitizeEmail(fmt.Sprintf("%s@%s", user.Cid, domain)),
+		PrimaryEmail:               fmt.Sprintf("%s@%s", goldapps.SanitizeEmail(user.Cid), domain),
 	}
 }
