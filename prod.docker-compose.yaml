@@ -7,9 +7,16 @@ services:
     image: goldapps:stable
     restart: always
     entrypoint: ./sleep_and_run.sh
-    command: ["-from ldap", "-to gapps", "-y", "-dry"]
+    command: [
+      "-from ldap",
+      "-to gapps",
+      "-additions additions.json",
+      "-y",
+      "-dry"
+    ]
     volumes:
       - ./cmd/config.toml:/app/config.toml:ro
       - ./cmd/gapps.json:/app/gapps.json:ro
+      - ./cmd/additions.json:/app/additions.json:ro
     environment:
-      - WAIT=2d
+      - WAIT=1h
