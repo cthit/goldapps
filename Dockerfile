@@ -1,5 +1,5 @@
 # Dockerfile for goldapps production
-FROM golang:alpine AS buildStage
+FROM golang:1.12-alpine AS buildStage
 MAINTAINER digIT <digit@chalmers.it>
 
 # Install git
@@ -8,12 +8,12 @@ RUN apk upgrade
 RUN apk add --update git
 
 # Copy sources
-RUN mkdir -p $GOPATH/src/github.com/cthit/goldapps
-COPY . $GOPATH/src/github.com/cthit/goldapps
-WORKDIR $GOPATH/src/github.com/cthit/goldapps/cmd
+RUN mkdir -p /goldapps
+COPY . /goldapps
+WORKDIR /goldapps/cmd
 
 # Grab dependencies
-RUN go get -d -v ./...
+#RUN go get -d -v ./...
 
 # build binary
 RUN go install -v
