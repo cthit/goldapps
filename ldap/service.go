@@ -245,7 +245,7 @@ func (s ServiceLDAP) GetGroups() ([]goldapps.Group, error) {
 	}
 	groups = append(groups, positionGroups...)
 
-	chairmenGroupMembers, err := s.getChairmenGroup()
+	chairmenGroupMembers, err := s.getRoleInGroups("ordf", false)
 	if err != nil {
 		return nil, err
 	}
@@ -254,7 +254,7 @@ func (s ServiceLDAP) GetGroups() ([]goldapps.Group, error) {
 		Members: chairmenGroupMembers,
 	})
 
-	chairmenInCommitteesGroupMembers, err := s.getChairmenInCommitteesGroup()
+	chairmenInCommitteesGroupMembers, err := s.getRoleInGroups("ordf", true)
 	if err != nil {
 		return nil, err
 	}
@@ -263,13 +263,22 @@ func (s ServiceLDAP) GetGroups() ([]goldapps.Group, error) {
 		Members: chairmenInCommitteesGroupMembers,
 	})
 
-	treasurersGroupMembers, err := s.getTreasurersGroup()
+	treasurersGroupMembers, err := s.getRoleInGroups("kassor", false)
 	if err != nil {
 		return nil, err
 	}
 	groups = append(groups, goldapps.Group{
 		Email:   "kassorer@chalmers.it",
 		Members: treasurersGroupMembers,
+	})
+
+	treasurersInCommitteesGroupMembers, err := s.getRoleInGroups("kassor", true)
+	if err != nil {
+		return nil, err
+	}
+	groups = append(groups, goldapps.Group{
+		Email:   "kassorer.kommitteer@chalmers.it",
+		Members: treasurersInCommitteesGroupMembers,
 	})
 
 	accounts, err := s.getUsers()
@@ -450,12 +459,12 @@ func (s ServiceLDAP) getPositionGroups() ([]goldapps.Group, error) {
 
 }
 
-func (s ServiceLDAP) getChairmenGroup() ([]string, error) {
+func (s ServiceLDAP) getRoleInGroups(role string, onlyCommittees bool) ([]string, error) {
 	searchRequest := ldap.NewSearchRequest(
 		"ou=fkit,ou=groups,dc=chalmers,dc=it", // The base dn to search
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		"(&(objectClass=itPosition)(cn=ordf))", // The filter to apply
-		[]string{"cn"},                         // A list attributes to retrieve
+		fmt.Sprintf("(&(objectClass=itPosition)(cn=%s))", role), // The filter to apply
+		[]string{"cn"}, // A list attributes to retrieve
 		nil,
 	)
 
@@ -464,66 +473,20 @@ func (s ServiceLDAP) getChairmenGroup() ([]string, error) {
 		return nil, err
 	}
 
-	var chairmenGroup []string
-
-	for _, entry := range result.Entries {
-		dnSplit := strings.SplitN(entry.DN, ",", 3)
-		chairmenGroup = append(chairmenGroup, "ordf."+dnSplit[1][3:]+"@chalmers.it")
-	}
-	return chairmenGroup, nil
-}
-
-func (s ServiceLDAP) getTreasurersGroup() ([]string, error) {
-	searchRequest := ldap.NewSearchRequest(
-		"ou=fkit,ou=groups,dc=chalmers,dc=it", // The base dn to search
-		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		"(&(objectClass=itPosition)(cn=kassor))", // The filter to apply
-		[]string{"cn"},                           // A list attributes to retrieve
-		nil,
-	)
-
-	result, err := s.Connection.Search(searchRequest)
-	if err != nil {
-		return nil, err
-	}
-
-	var chairmenGroup []string
-
-	for _, entry := range result.Entries {
-		dnSplit := strings.SplitN(entry.DN, ",", 3)
-		chairmenGroup = append(chairmenGroup, "kassor."+dnSplit[1][3:]+"@chalmers.it")
-	}
-	return chairmenGroup, nil
-}
-
-func (s ServiceLDAP) getChairmenInCommitteesGroup() ([]string, error) {
-	searchRequest := ldap.NewSearchRequest(
-		"ou=fkit,ou=groups,dc=chalmers,dc=it", // The base dn to search
-		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		"(&(objectClass=itPosition)(cn=ordf))", // The filter to apply
-		[]string{"cn"},                         // A list attributes to retrieve
-		nil,
-	)
-
-	result, err := s.Connection.Search(searchRequest)
-	if err != nil {
-		return nil, err
-	}
-
-	var chairmenInCommitteeGroup []string
+	var treasurersInCommitteeGroup []string
 
 	for _, entry := range result.Entries {
 		gtype, err := dnPositionType(s, entry.DN)
 		if err != nil {
 			return nil, err
 		}
-		if gtype == "Committee" {
+		if !onlyCommittees || gtype == "Committee" {
 			dnSplit := strings.SplitN(entry.DN, ",", 3)
-			chairmenInCommitteeGroup = append(chairmenInCommitteeGroup, "ordf."+dnSplit[1][3:]+"@chalmers.it")
+			treasurersInCommitteeGroup = append(treasurersInCommitteeGroup, fmt.Sprintf("%s.%s@chalmers.it", role, dnSplit[1][3:]))
 		}
 
 	}
-	return chairmenInCommitteeGroup, nil
+	return treasurersInCommitteeGroup, nil
 }
 
 func findEntry(ldapEntries []*ldap.Entry, DN string) *ldap.Entry {
