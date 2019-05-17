@@ -1,4 +1,4 @@
-package goldapps
+package model
 
 import (
 	"strings"
@@ -13,6 +13,13 @@ type User struct {
 }
 
 type Users []User
+
+// Data struct representing how a user should look before and after an update
+// Allows for efficient updates as application doesn't have to re-upload whole user
+type UserUpdate struct {
+	Before User
+	After  User
+}
 
 // Search for username(cid) in list of groups
 func (users Users) Contains(cid string) bool {
@@ -45,7 +52,7 @@ func (user User) Equals(other User) bool {
 		return false
 	}
 
-	// Don't check email as its not saved in every consumer atm
+	// Don't check email as its not saved in every services atm
 	/*if user.Mail != other.Mail {
 		return false
 	}*/

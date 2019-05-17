@@ -3,17 +3,17 @@ package admin
 import (
 	"bytes"
 	"fmt"
-	"github.com/cthit/goldapps"
+	"github.com/cthit/goldapps/internal/pkg/model"
 	"google.golang.org/api/admin/directory/v1" // Imports as admin
 	"time"
 )
 
-func (s googleService) DeleteGroup(group goldapps.Group) error {
+func (s googleService) DeleteGroup(group model.Group) error {
 	err := s.adminService.Groups.Delete(group.Email).Do()
 	return err
 }
 
-func (s googleService) UpdateGroup(groupUpdate goldapps.GroupUpdate) error {
+func (s googleService) UpdateGroup(groupUpdate model.GroupUpdate) error {
 	newGroup := admin.Group{
 		Email: groupUpdate.Before.Email,
 	}
@@ -22,7 +22,7 @@ func (s googleService) UpdateGroup(groupUpdate goldapps.GroupUpdate) error {
 	for _, member := range groupUpdate.After.Members {
 		exists := false
 		for _, existingMember := range groupUpdate.Before.Members {
-			if goldapps.CompareEmails(member, existingMember) {
+			if model.CompareEmails(member, existingMember) {
 				exists = true
 				break
 			}
@@ -40,7 +40,7 @@ func (s googleService) UpdateGroup(groupUpdate goldapps.GroupUpdate) error {
 	for _, existingMember := range groupUpdate.Before.Members {
 		keep := false
 		for _, member := range groupUpdate.After.Members {
-			if goldapps.CompareEmails(existingMember, member) {
+			if model.CompareEmails(existingMember, member) {
 				keep = true
 				break
 			}
@@ -57,7 +57,7 @@ func (s googleService) UpdateGroup(groupUpdate goldapps.GroupUpdate) error {
 	for _, alias := range groupUpdate.After.Aliases {
 		exists := false
 		for _, existingAlias := range groupUpdate.Before.Aliases {
-			if goldapps.CompareEmails(alias, existingAlias) {
+			if model.CompareEmails(alias, existingAlias) {
 				exists = true
 				break
 			}
@@ -74,7 +74,7 @@ func (s googleService) UpdateGroup(groupUpdate goldapps.GroupUpdate) error {
 	for _, existingAlias := range groupUpdate.Before.Aliases {
 		keep := false
 		for _, alias := range groupUpdate.After.Aliases {
-			if goldapps.CompareEmails(existingAlias, alias) {
+			if model.CompareEmails(existingAlias, alias) {
 				keep = true
 				break
 			}
@@ -91,7 +91,7 @@ func (s googleService) UpdateGroup(groupUpdate goldapps.GroupUpdate) error {
 	return err
 }
 
-func (s googleService) AddGroup(group goldapps.Group) error {
+func (s googleService) AddGroup(group model.Group) error {
 	newGroup := admin.Group{
 		Email: group.Email,
 	}
@@ -121,14 +121,14 @@ func (s googleService) AddGroup(group goldapps.Group) error {
 	return nil
 }
 
-func (s googleService) GetGroups() ([]goldapps.Group, error) {
+func (s googleService) GetGroups() ([]model.Group, error) {
 
 	adminGroups, err := s.getGoogleGroups(googleCustomer)
 	if err != nil {
 		return nil, err
 	}
 
-	groups := make([]goldapps.Group, len(adminGroups))
+	groups := make([]model.Group, len(adminGroups))
 	for i, group := range adminGroups {
 
 		p := (i * 100) / len(groups)
@@ -152,7 +152,7 @@ func (s googleService) GetGroups() ([]goldapps.Group, error) {
 			return nil, err
 		}
 
-		groups[i] = goldapps.Group{
+		groups[i] = model.Group{
 			Email:   group.Email,
 			Members: members,
 			Aliases: group.Aliases,

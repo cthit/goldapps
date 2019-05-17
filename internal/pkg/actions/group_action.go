@@ -1,15 +1,17 @@
-package goldapps
+package actions
 
 import (
 	"bytes"
 	"fmt"
+	"github.com/cthit/goldapps/internal/pkg/model"
+	"github.com/cthit/goldapps/internal/pkg/services"
 )
 
 // Set of action, to be performed on a set of groups
 type GroupActions struct {
-	Updates   []GroupUpdate
-	Additions []Group
-	Deletions []Group
+	Updates   []model.GroupUpdate
+	Additions []model.Group
+	Deletions []model.Group
 }
 
 func (actions GroupActions) Amount() int {
@@ -23,11 +25,11 @@ type GroupActionErrors struct {
 	Deletions []GroupAddOrDelError
 }
 type GroupUpdateError struct {
-	Action GroupUpdate
+	Action model.GroupUpdate
 	Error  error
 }
 type GroupAddOrDelError struct {
-	Action Group
+	Action model.Group
 	Error  error
 }
 
@@ -48,55 +50,48 @@ func (actions GroupActionErrors) String() string {
 	return builder.String()
 }
 
-// Data struct representing how a group looks not and how it should look after an update
-// Allows for efficient updates as application doesn't have to re-upload whole group
-type GroupUpdate struct {
-	Before Group
-	After  Group
-}
-
 // Commits a set of actions to a service.
 // Returns all actions performed and a error if not all actions could be performed for some reason.
-func (actions GroupActions) Commit(service UpdateService) GroupActionErrors {
+func (actions GroupActions) Commit(service services.UpdateService) GroupActionErrors {
 
 	errors := GroupActionErrors{}
 
 	if len(actions.Deletions) > 0 {
 		fmt.Println("(Groups) Performing deletions")
-		printProgress(0, len(actions.Deletions), 0)
-		for deletionsIndex, group := range actions.Deletions {
+		//		printProgress(0, len(actions.Deletions), 0)
+		for _, group := range actions.Deletions {
 			err := service.DeleteGroup(group)
 			if err != nil {
 				// Save error
 				errors.Deletions = append(errors.Deletions, GroupAddOrDelError{Action: group, Error: err})
 			}
-			printProgress(deletionsIndex+1, len(actions.Deletions), len(errors.Deletions))
+			//			printProgress(deletionsIndex+1, len(actions.Deletions), len(errors.Deletions))
 		}
 	}
 
 	if len(actions.Additions) > 0 {
 		fmt.Println("(Groups) Performing additions")
-		printProgress(0, len(actions.Additions), 0)
-		for additionsIndex, group := range actions.Additions {
+		//		printProgress(0, len(actions.Additions), 0)
+		for _, group := range actions.Additions {
 			err := service.AddGroup(group)
 			if err != nil {
 				// Save error
 				errors.Additions = append(errors.Additions, GroupAddOrDelError{Action: group, Error: err})
 			}
-			printProgress(additionsIndex+1, len(actions.Additions), len(errors.Additions))
+			//			printProgress(additionsIndex+1, len(actions.Additions), len(errors.Additions))
 		}
 	}
 
 	if len(actions.Updates) > 0 {
 		fmt.Println("(Groups) Performing updates")
-		printProgress(0, len(actions.Updates), 0)
-		for updatesIndex, update := range actions.Updates {
+		//		printProgress(0, len(actions.Updates), 0)
+		for _, update := range actions.Updates {
 			err := service.UpdateGroup(update)
 			if err != nil {
 				// Save error
 				errors.Updates = append(errors.Updates, GroupUpdateError{Action: update, Error: err})
 			}
-			printProgress(updatesIndex+1, len(actions.Updates), len(errors.Updates))
+			//			printProgress(updatesIndex+1, len(actions.Updates), len(errors.Updates))
 		}
 	}
 
@@ -105,7 +100,7 @@ func (actions GroupActions) Commit(service UpdateService) GroupActionErrors {
 
 // Determines actions required to make the "old" group list look as the "new" group list.
 // Returns a list with those actions.
-func GroupActionsRequired(old []Group, new []Group) GroupActions {
+func GroupActionsRequired(old []model.Group, new []model.Group) GroupActions {
 	requiredActions := GroupActions{}
 
 	for _, newGroup := range new {
@@ -118,7 +113,7 @@ func GroupActionsRequired(old []Group, new []Group) GroupActions {
 				// check if group has to be updates
 				if !newGroup.Equals(oldGroup) {
 					// Add group update
-					requiredActions.Updates = append(requiredActions.Updates, GroupUpdate{
+					requiredActions.Updates = append(requiredActions.Updates, model.GroupUpdate{
 						Before: oldGroup,
 						After:  newGroup,
 					})

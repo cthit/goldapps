@@ -1,16 +1,17 @@
-package goldapps
+package duplicates
 
 import (
+	"github.com/cthit/goldapps/internal/pkg/model"
 	"strings"
 )
 
-func RemoveDuplicates(users Users, groups Groups) (Users, Groups) {
+func RemoveDuplicates(users model.Users, groups model.Groups) (model.Users, model.Groups) {
 
 	// Compare Users with Groups
 	for i, user := range users {
 		for k := 0; k < len(groups); k++ {
 			// Check if any cid conflicts with any group name
-			if CompareEmails(user.Cid, extractIdentifier(groups[k].Email)) {
+			if model.CompareEmails(user.Cid, extractIdentifier(groups[k].Email)) {
 				if groups[k].Expendable {
 					groups = removeArrayGroup(groups, k)
 					k-- // don't breaking the loop
@@ -21,7 +22,7 @@ func RemoveDuplicates(users Users, groups Groups) (Users, Groups) {
 				}
 			}
 			// Check if any user nick conflicts with any group name
-			if CompareEmails(user.Nick, extractIdentifier(groups[k].Email)) {
+			if model.CompareEmails(user.Nick, extractIdentifier(groups[k].Email)) {
 				if groups[k].Expendable {
 					groups = removeArrayGroup(groups, k)
 					k-- // don't breaking the loop
@@ -33,7 +34,7 @@ func RemoveDuplicates(users Users, groups Groups) (Users, Groups) {
 
 			for aliasIndex, alias := range groups[k].Aliases {
 				// Check if any cid conflicts with any group alias
-				if CompareEmails(user.Cid, extractIdentifier(alias)) {
+				if model.CompareEmails(user.Cid, extractIdentifier(alias)) {
 					if groups[k].Expendable {
 						groups[k] = removeAlias(groups[k], aliasIndex)
 					} else {
@@ -43,7 +44,7 @@ func RemoveDuplicates(users Users, groups Groups) (Users, Groups) {
 					}
 				}
 				// Check if any Nick conflicts with any group alias
-				if CompareEmails(user.Nick, extractIdentifier(alias)) {
+				if model.CompareEmails(user.Nick, extractIdentifier(alias)) {
 					if groups[k].Expendable {
 						groups[k] = removeAlias(groups[k], aliasIndex)
 					} else {
@@ -61,18 +62,18 @@ func RemoveDuplicates(users Users, groups Groups) (Users, Groups) {
 			// Don't check with itself
 			if i != j {
 				// Compare cids
-				if CompareEmails(user.Cid, otherUser.Cid) {
+				if model.CompareEmails(user.Cid, otherUser.Cid) {
 					// Should not be able to happen
 					panic("two users with cid: " + user.Cid)
 				}
 				// Compare Nicks
-				if CompareEmails(user.Nick, otherUser.Nick) {
+				if model.CompareEmails(user.Nick, otherUser.Nick) {
 					// Nicks are not that important
 					users[i].Nick = ""
 					users[j].Nick = ""
 				}
 				// Compare cids with nicks
-				if CompareEmails(user.Cid, otherUser.Nick) {
+				if model.CompareEmails(user.Cid, otherUser.Nick) {
 					// Nicks are not that important
 					users[j].Nick = ""
 				}
@@ -86,19 +87,19 @@ func RemoveDuplicates(users Users, groups Groups) (Users, Groups) {
 			// Don't check with itself
 			if i != j {
 				// Compare Emails
-				if CompareEmails(group.Email, otherGroup.Email) {
+				if model.CompareEmails(group.Email, otherGroup.Email) {
 					// Something is set up wrong
 					panic("two groups with email: " + group.Email)
 				}
 				for _, alias := range group.Aliases {
 					// Compare emails with aliases
-					if CompareEmails(alias, otherGroup.Email) {
+					if model.CompareEmails(alias, otherGroup.Email) {
 						// Something is set up wrong
 						panic("two groups with alias/email: " + group.Email + ", " + otherGroup.Email)
 					}
 					for _, otherAlias := range otherGroup.Aliases {
 						// Compare aliases with aliases
-						if CompareEmails(alias, otherAlias) {
+						if model.CompareEmails(alias, otherAlias) {
 							// Something is set up wrong
 							panic("two groups with alias: " + alias)
 						}
@@ -110,7 +111,7 @@ func RemoveDuplicates(users Users, groups Groups) (Users, Groups) {
 	return users, groups
 }
 
-func removeArrayGroup(s Groups, i int) Groups {
+func removeArrayGroup(s model.Groups, i int) model.Groups {
 	s[len(s)-1], s[i] = s[i], s[len(s)-1]
 	return s[:len(s)-1]
 }
@@ -120,7 +121,7 @@ func removeArrayString(s []string, i int) []string {
 	return s[:len(s)-1]
 }
 
-func removeAlias(group Group, aliasIndex int) Group {
+func removeAlias(group model.Group, aliasIndex int) model.Group {
 	group.Aliases = removeArrayString(group.Aliases, aliasIndex)
 	return group
 }

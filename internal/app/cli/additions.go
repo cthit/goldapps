@@ -1,13 +1,13 @@
-package main
+package cli
 
 import (
 	"fmt"
-	"github.com/cthit/goldapps"
-	"github.com/cthit/goldapps/json"
+	"github.com/cthit/goldapps/internal/pkg/model"
+	"github.com/cthit/goldapps/internal/pkg/services/json"
 	"regexp"
 )
 
-func addAdditions(providerGroups goldapps.Groups, providerUsers goldapps.Users) (goldapps.Groups, goldapps.Users) {
+func addAdditions(providerGroups model.Groups, providerUsers model.Users) (model.Groups, model.Users) {
 	fmt.Println("Collecting additions")
 	additionUsers, additionGroups := getAdditions()
 	if additionUsers != nil && additionGroups != nil {
@@ -26,7 +26,7 @@ func addAdditions(providerGroups goldapps.Groups, providerUsers goldapps.Users) 
 	return providerGroups, providerUsers
 }
 
-func getAdditions() ([]goldapps.User, []goldapps.Group) {
+func getAdditions() ([]model.User, []model.Group) {
 
 	var from string
 	if flags.interactive {
@@ -62,7 +62,7 @@ func getAdditions() ([]goldapps.User, []goldapps.Group) {
 	}
 }
 
-func mergeAdditionGroups(additionGroups goldapps.Groups, providerGroups goldapps.Groups) goldapps.Groups {
+func mergeAdditionGroups(additionGroups model.Groups, providerGroups model.Groups) model.Groups {
 	for _, group := range additionGroups {
 		found := false
 		for i, pgroup := range providerGroups {
@@ -103,7 +103,7 @@ func mergeAdditionGroups(additionGroups goldapps.Groups, providerGroups goldapps
 	}
 	return providerGroups
 }
-func mergeAdditionalUsers(additionUsers goldapps.Users, providerUsers goldapps.Users) goldapps.Users {
+func mergeAdditionalUsers(additionUsers model.Users, providerUsers model.Users) model.Users {
 	for _, user := range additionUsers {
 		found := false
 		for i, pUser := range providerUsers {

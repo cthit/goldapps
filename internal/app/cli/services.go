@@ -1,19 +1,20 @@
-package main
+package cli
 
 import (
 	"fmt"
-	"github.com/cthit/goldapps"
-	"github.com/cthit/goldapps/admin"
-	"github.com/cthit/goldapps/json"
-	"github.com/cthit/goldapps/ldap"
+	"github.com/cthit/goldapps/internal/pkg/model"
+	"github.com/cthit/goldapps/internal/pkg/services"
+	"github.com/cthit/goldapps/internal/pkg/services/admin"
+	"github.com/cthit/goldapps/internal/pkg/services/json"
+	"github.com/cthit/goldapps/internal/pkg/services/ldap"
 	"github.com/spf13/viper"
 	"regexp"
 )
 
-func getConsumer() goldapps.UpdateService {
+func getConsumer() services.UpdateService {
 	var to string
 	if flags.interactive {
-		to = askString("Which consumer would you like to use, 'gapps' or '*.json?", "gapps")
+		to = askString("Which services would you like to use, 'gapps' or '*.json?", "gapps")
 	} else {
 		to = flags.to
 	}
@@ -34,7 +35,7 @@ func getConsumer() goldapps.UpdateService {
 			consumer, _ := json.NewJsonService(to)
 			return consumer
 		} else {
-			fmt.Println("You must specify 'gapps' or '*.json' as consumer.")
+			fmt.Println("You must specify 'gapps' or '*.json' as services.")
 			previous := flags.interactive
 			flags.interactive = true
 			defer func() {
@@ -45,10 +46,10 @@ func getConsumer() goldapps.UpdateService {
 	}
 }
 
-func getProvider() goldapps.CollectionService {
+func getProvider() services.CollectionService {
 	var from string
 	if flags.interactive {
-		from = askString("which provider would you like to use, 'ldap', 'gapps' or '*.json'?", "ldap")
+		from = askString("which providers would you like to use, 'ldap', 'gapps' or '*.json'?", "ldap")
 	} else {
 		from = flags.from
 	}
@@ -74,7 +75,7 @@ func getProvider() goldapps.CollectionService {
 			provider, _ := json.NewJsonService(from)
 			return provider
 		} else {
-			fmt.Println("You must specify 'gapps', 'ldap' or '*.json' as provider.")
+			fmt.Println("You must specify 'gapps', 'ldap' or '*.json' as providers.")
 			previous := flags.interactive
 			flags.interactive = true
 			defer func() {
@@ -85,7 +86,7 @@ func getProvider() goldapps.CollectionService {
 	}
 }
 
-func collectGroups(service goldapps.CollectionService) goldapps.Groups {
+func collectGroups(service services.CollectionService) model.Groups {
 	groups, err := service.GetGroups()
 	if err != nil {
 		fmt.Println("Failed to collect groups")
@@ -95,7 +96,7 @@ func collectGroups(service goldapps.CollectionService) goldapps.Groups {
 	return groups
 }
 
-func collectUsers(service goldapps.CollectionService) goldapps.Users {
+func collectUsers(service services.CollectionService) model.Users {
 	users, err := service.GetUsers()
 	if err != nil {
 		fmt.Println("Failed to collect users")

@@ -2,13 +2,13 @@ package admin
 
 import (
 	"fmt"
-	"github.com/cthit/goldapps"
+	"github.com/cthit/goldapps/internal/pkg/model"
 	"google.golang.org/api/admin/directory/v1" // Imports as admin
 	"strings"
 	"time"
 )
 
-func (s googleService) AddUser(user goldapps.User) error {
+func (s googleService) AddUser(user model.User) error {
 
 	usr := buildGoldappsUser(user, s.domain)
 
@@ -31,12 +31,12 @@ func (s googleService) AddUser(user goldapps.User) error {
 	time.Sleep(time.Second)
 
 	// Add alias for nick@example.ex
-	return s.addUserAlias(fmt.Sprintf("%s@%s", goldapps.SanitizeEmail(user.Cid), s.domain), fmt.Sprintf("%s@%s", goldapps.SanitizeEmail(user.Nick), s.domain))
+	return s.addUserAlias(fmt.Sprintf("%s@%s", model.SanitizeEmail(user.Cid), s.domain), fmt.Sprintf("%s@%s", model.SanitizeEmail(user.Nick), s.domain))
 }
 
-func (s googleService) UpdateUser(update goldapps.UserUpdate) error {
+func (s googleService) UpdateUser(update model.UserUpdate) error {
 	_, err := s.adminService.Users.Update(
-		fmt.Sprintf("%s@%s", goldapps.SanitizeEmail(update.Before.Cid), s.domain),
+		fmt.Sprintf("%s@%s", model.SanitizeEmail(update.Before.Cid), s.domain),
 		buildGoldappsUser(update.After, s.domain),
 	).Do()
 	if err != nil {
@@ -44,12 +44,12 @@ func (s googleService) UpdateUser(update goldapps.UserUpdate) error {
 	}
 
 	// Add alias for nick@example.ex
-	return s.addUserAlias(fmt.Sprintf("%s@%s", goldapps.SanitizeEmail(update.After.Cid), s.domain), fmt.Sprintf("%s@%s", goldapps.SanitizeEmail(update.After.Nick), s.domain))
+	return s.addUserAlias(fmt.Sprintf("%s@%s", model.SanitizeEmail(update.After.Cid), s.domain), fmt.Sprintf("%s@%s", model.SanitizeEmail(update.After.Nick), s.domain))
 }
 
-func (s googleService) DeleteUser(user goldapps.User) error {
+func (s googleService) DeleteUser(user model.User) error {
 	admin := fmt.Sprintf("%s@%s", s.admin, s.domain)
-	userId := fmt.Sprintf("%s@%s", goldapps.SanitizeEmail(user.Cid), s.domain)
+	userId := fmt.Sprintf("%s@%s", model.SanitizeEmail(user.Cid), s.domain)
 	if admin == userId {
 		fmt.Printf("Skipping andmin user: %s\n", admin)
 	}
@@ -58,12 +58,12 @@ func (s googleService) DeleteUser(user goldapps.User) error {
 	return err
 }
 
-func (s googleService) GetUsers() ([]goldapps.User, error) {
+func (s googleService) GetUsers() ([]model.User, error) {
 	adminUsers, err := s.getGoogleUsers(googleCustomer)
 	if err != nil {
 		return nil, err
 	}
-	users := make([]goldapps.User, len(adminUsers)-1)
+	users := make([]model.User, len(adminUsers)-1)
 
 	admin := fmt.Sprintf("%s@%s", s.admin, s.domain)
 
@@ -81,7 +81,7 @@ func (s googleService) GetUsers() ([]goldapps.User, error) {
 			// Extracting cid form (cid@example.ex)
 			cid := strings.Split(adminUser.PrimaryEmail, "@")[0]
 
-			users[i] = goldapps.User{
+			users[i] = model.User{
 				Cid:        cid,
 				FirstName:  firstName,
 				SecondName: adminUser.Name.FamilyName,

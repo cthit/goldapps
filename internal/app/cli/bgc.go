@@ -1,8 +1,10 @@
-package main
+package cli
 
 import (
 	"fmt"
-	"github.com/cthit/goldapps"
+	"github.com/cthit/goldapps/internal/pkg/actions"
+	"github.com/cthit/goldapps/internal/pkg/duplicates"
+	"github.com/cthit/goldapps/internal/pkg/model"
 )
 
 func init() {
@@ -16,29 +18,29 @@ func init() {
 	fmt.Println("Loaded config.")
 }
 
-func main() {
+func Run() {
 
-	fmt.Println("Setting up provider")
+	fmt.Println("Setting up providers")
 	provider := getProvider()
 
-	fmt.Println("Setting up consumer")
+	fmt.Println("Setting up services")
 	consumer := getConsumer()
 
 	// Collect users and groups
-	var providerUsers goldapps.Users
-	var consumerUsers goldapps.Users
-	var providerGroups goldapps.Groups
-	var consumerGroups goldapps.Groups
+	var providerUsers model.Users
+	var consumerUsers model.Users
+	var providerGroups model.Groups
+	var consumerGroups model.Groups
 	if !flags.onlyUsers {
-		fmt.Println("Collecting groups from the provider...")
+		fmt.Println("Collecting groups from the providers...")
 		providerGroups = collectGroups(provider)
-		fmt.Println("Collecting groups from the consumer...")
+		fmt.Println("Collecting groups from the services...")
 		consumerGroups = collectGroups(consumer)
 	}
 	if !flags.onlyGroups {
-		fmt.Println("Collecting users from the provider...")
+		fmt.Println("Collecting users from the providers...")
 		providerUsers = collectUsers(provider)
-		fmt.Println("Collecting users from the consumer...")
+		fmt.Println("Collecting users from the services...")
 		consumerUsers = collectUsers(consumer)
 	}
 
@@ -46,19 +48,19 @@ func main() {
 	providerGroups, providerUsers = addAdditions(providerGroups, providerUsers)
 
 	// Check for and handle duplicates
-	providerUsers, providerGroups = goldapps.RemoveDuplicates(providerUsers, providerGroups)
+	providerUsers, providerGroups = duplicates.RemoveDuplicates(providerUsers, providerGroups)
 
 	// Get changes to make
-	groupChanges := goldapps.GroupActions{}
+	groupChanges := actions.GroupActions{}
 	if !flags.onlyUsers {
-		fmt.Println("Colculating difference between the consumer and provider groups.")
-		proposedGroupChanges := goldapps.GroupActionsRequired(consumerGroups, providerGroups)
+		fmt.Println("Colculating difference between the services and providers groups.")
+		proposedGroupChanges := actions.GroupActionsRequired(consumerGroups, providerGroups)
 		groupChanges = getGroupChanges(proposedGroupChanges)
 	}
-	userChanges := goldapps.UserActions{}
+	userChanges := actions.UserActions{}
 	if !flags.onlyGroups {
-		fmt.Println("Colculating difference between the consumer and provider users.")
-		proposedUserChanges := goldapps.UserActionsRequired(consumerUsers, providerUsers)
+		fmt.Println("Colculating difference between the services and providers users.")
+		proposedUserChanges := actions.UserActionsRequired(consumerUsers, providerUsers)
 		userChanges = getUserChanges(proposedUserChanges)
 	}
 
@@ -107,7 +109,7 @@ func main() {
 	}
 }
 
-func getGroupChanges(proposedChanges goldapps.GroupActions) goldapps.GroupActions {
+func getGroupChanges(proposedChanges actions.GroupActions) actions.GroupActions {
 	if !flags.interactive && flags.noInteraction {
 		fmt.Printf(
 			"(Groups) Automaticly accepting %d addition, %d deletions and %d updates\n",
@@ -168,7 +170,7 @@ func getGroupChanges(proposedChanges goldapps.GroupActions) goldapps.GroupAction
 	return proposedChanges
 }
 
-func getUserChanges(proposedChanges goldapps.UserActions) goldapps.UserActions {
+func getUserChanges(proposedChanges actions.UserActions) actions.UserActions {
 	if !flags.interactive && flags.noInteraction {
 		fmt.Printf(
 			"(Users) Automaticly accepting %d addition, %d deletions and %d updates\n",

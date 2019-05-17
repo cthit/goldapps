@@ -1,4 +1,4 @@
-package goldapps
+package model
 
 // Represents a email group.
 // Email is the id and main email for the group.
@@ -13,6 +13,13 @@ type Group struct {
 }
 
 type Groups []Group
+
+// Data struct representing how a group looks not and how it should look after an update
+// Allows for efficient updates as application doesn't have to re-upload whole group
+type GroupUpdate struct {
+	Before Group
+	After  Group
+}
 
 // Search for groupname(email) in list of groups
 func (groups Groups) Contains(email string) bool {

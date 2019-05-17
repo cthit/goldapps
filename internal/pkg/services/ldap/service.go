@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 
 	"fmt"
-	"github.com/cthit/goldapps"
+	"github.com/cthit/goldapps/internal/pkg/model"
 	"gopkg.in/ldap.v2"
 	"strings"
 )
@@ -85,12 +85,12 @@ func (s ServiceLDAP) users() ([]*ldap.Entry, error) {
 	return result.Entries, nil
 }
 
-func (s ServiceLDAP) GetUsers() ([]goldapps.User, error) {
+func (s ServiceLDAP) GetUsers() ([]model.User, error) {
 	return s.getUsers()
 }
 
 // Collect all users who are members of a committee
-func (s ServiceLDAP) getUsers() ([]goldapps.User, error) {
+func (s ServiceLDAP) getUsers() ([]model.User, error) {
 	users, err := s.users()
 	if err != nil {
 		return nil, err
@@ -111,8 +111,8 @@ func (s ServiceLDAP) getUsers() ([]goldapps.User, error) {
 		return nil, err
 	}
 
-	// Create an empty goldapps.Group slice
-	privilegedUsers := make(goldapps.Users, 0)
+	// Create an empty model.Group slice
+	privilegedUsers := make(model.Users, 0)
 
 	for _, group := range groups.Entries {
 		// TODO: What qualified as a privileged group should be made configurable. See FIXME:s
@@ -127,7 +127,7 @@ func (s ServiceLDAP) getUsers() ([]goldapps.User, error) {
 				for _, user := range parsePrivilegedGroupMember(member, users, groups.Entries) {
 					if !privilegedUsers.Contains(user.GetAttributeValue("uid")) {
 						if user.GetAttributeValue("gdprEducated") == "TRUE" { // only add user if he's gdpr educated
-							privilegedUsers = append(privilegedUsers, goldapps.User{
+							privilegedUsers = append(privilegedUsers, model.User{
 								Cid:        user.GetAttributeValue("uid"),
 								Nick:       user.GetAttributeValue("nickname"),
 								FirstName:  user.GetAttributeValue("givenName"),
@@ -168,8 +168,8 @@ func parsePrivilegedGroupMember(memberDN string, users []*ldap.Entry, groups []*
 }
 
 // Collects all committees from LDAP and then creates a
-// goldapps.Group slice.
-func (s ServiceLDAP) GetGroups() ([]goldapps.Group, error) {
+// model.Group slice.
+func (s ServiceLDAP) GetGroups() ([]model.Group, error) {
 	users, err := s.users()
 	if err != nil {
 		return nil, err
@@ -190,14 +190,14 @@ func (s ServiceLDAP) GetGroups() ([]goldapps.Group, error) {
 		return nil, err
 	}
 
-	// Creates an empty goldapps.Group slice
-	groups := make([]goldapps.Group, 0)
+	// Creates an empty model.Group slice
+	groups := make([]model.Group, 0)
 
-	// Creates a goldapps.Group with appropriate mails and members
+	// Creates a model.Group with appropriate mails and members
 	for _, entry := range committees.Entries {
 
-		// Creates a goldapps.Group with it's mail
-		committee := goldapps.Group{
+		// Creates a model.Group with it's mail
+		committee := model.Group{
 			Email:   entry.GetAttributeValue("mail"),
 			Type:    entry.GetAttributeValue("type"),
 			Members: nil,
@@ -249,7 +249,7 @@ func (s ServiceLDAP) GetGroups() ([]goldapps.Group, error) {
 	if err != nil {
 		return nil, err
 	}
-	groups = append(groups, goldapps.Group{
+	groups = append(groups, model.Group{
 		Email:   "ordforanden@chalmers.it",
 		Members: chairmenGroupMembers,
 	})
@@ -258,7 +258,7 @@ func (s ServiceLDAP) GetGroups() ([]goldapps.Group, error) {
 	if err != nil {
 		return nil, err
 	}
-	groups = append(groups, goldapps.Group{
+	groups = append(groups, model.Group{
 		Email:   "ordforanden.kommitteer@chalmers.it",
 		Members: chairmenInCommitteesGroupMembers,
 	})
@@ -267,7 +267,7 @@ func (s ServiceLDAP) GetGroups() ([]goldapps.Group, error) {
 	if err != nil {
 		return nil, err
 	}
-	groups = append(groups, goldapps.Group{
+	groups = append(groups, model.Group{
 		Email:   "kassorer@chalmers.it",
 		Members: treasurersGroupMembers,
 	})
@@ -276,7 +276,7 @@ func (s ServiceLDAP) GetGroups() ([]goldapps.Group, error) {
 	if err != nil {
 		return nil, err
 	}
-	groups = append(groups, goldapps.Group{
+	groups = append(groups, model.Group{
 		Email:   "kassorer.kommitteer@chalmers.it",
 		Members: treasurersInCommitteesGroupMembers,
 	})
@@ -304,7 +304,7 @@ func (s ServiceLDAP) GetGroups() ([]goldapps.Group, error) {
 	return groups, nil
 }
 
-func replaceWithAccountEmail(group goldapps.Group, users goldapps.Users) goldapps.Group {
+func replaceWithAccountEmail(group model.Group, users model.Users) model.Group {
 	for i := 0; i < len(group.Members); i++ {
 		replacementFound := false
 		for _, user := range users {
@@ -324,13 +324,13 @@ func replaceWithAccountEmail(group goldapps.Group, users goldapps.Users) goldapp
 	return group
 }
 
-func (s ServiceLDAP) GetCustomGroups() ([]goldapps.Group, error) {
+func (s ServiceLDAP) GetCustomGroups() ([]model.Group, error) {
 	users, err := s.users()
 	if err != nil {
 		return nil, err
 	}
 
-	customGroups := make([]goldapps.Group, 0)
+	customGroups := make([]model.Group, 0)
 
 	for _, entry := range s.CustomEntryConfigs {
 		// Creates a search request to collect all committees from LDAP
@@ -399,7 +399,7 @@ func (s ServiceLDAP) GetCustomGroups() ([]goldapps.Group, error) {
 			}
 		}
 
-		group := goldapps.Group{
+		group := model.Group{
 			Email:   entry.Mail,
 			Members: members,
 		}
@@ -410,13 +410,13 @@ func (s ServiceLDAP) GetCustomGroups() ([]goldapps.Group, error) {
 	return customGroups, nil
 }
 
-func (s ServiceLDAP) getPositionGroups() ([]goldapps.Group, error) {
+func (s ServiceLDAP) getPositionGroups() ([]model.Group, error) {
 	users, err := s.users()
 	if err != nil {
 		return nil, err
 	}
 
-	var positionGroups []goldapps.Group
+	var positionGroups []model.Group
 
 	searchRequest := ldap.NewSearchRequest(
 		"ou=fkit,ou=groups,dc=chalmers,dc=it", // The base dn to search
@@ -440,7 +440,7 @@ func (s ServiceLDAP) getPositionGroups() ([]goldapps.Group, error) {
 			return nil, err
 		}
 
-		posGroup := goldapps.Group{
+		posGroup := model.Group{
 			Email: fmt.Sprintf("%s.%s@chalmers.it", pos, grp),
 			Type:  groupType + "Direct",
 		}

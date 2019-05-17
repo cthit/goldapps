@@ -3,7 +3,7 @@ package json
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cthit/goldapps"
+	"github.com/cthit/goldapps/internal/pkg/model"
 	"io/ioutil"
 	"os"
 )
@@ -13,11 +13,11 @@ type Service struct {
 }
 
 type dataObject struct {
-	Groups []goldapps.Group `json:"groups"`
-	Users  []goldapps.User  `json:"users"`
+	Groups []model.Group `json:"groups"`
+	Users  []model.User  `json:"users"`
 }
 
-func (s Service) DeleteUser(user goldapps.User) error {
+func (s Service) DeleteUser(user model.User) error {
 	groups, err := s.GetGroups()
 	if err != nil {
 		return err
@@ -39,7 +39,7 @@ func (s Service) DeleteUser(user goldapps.User) error {
 	return fmt.Errorf("user not found %v", user)
 }
 
-func (s Service) UpdateUser(update goldapps.UserUpdate) error {
+func (s Service) UpdateUser(update model.UserUpdate) error {
 	groups, err := s.GetGroups()
 	if err != nil {
 		return err
@@ -61,7 +61,7 @@ func (s Service) UpdateUser(update goldapps.UserUpdate) error {
 	return fmt.Errorf("user not found %v", update.Before)
 }
 
-func (s Service) AddUser(user goldapps.User) error {
+func (s Service) AddUser(user model.User) error {
 	groups, err := s.GetGroups()
 	if err != nil {
 		return err
@@ -80,7 +80,7 @@ func (s Service) AddUser(user goldapps.User) error {
 	return err
 }
 
-func (s Service) GetUsers() ([]goldapps.User, error) {
+func (s Service) GetUsers() ([]model.User, error) {
 
 	data, err := s.get()
 	if err != nil {
@@ -135,7 +135,7 @@ func (s Service) get() (dataObject, error) {
 	return data, nil
 }
 
-func (s Service) DeleteGroup(group goldapps.Group) error {
+func (s Service) DeleteGroup(group model.Group) error {
 	groups, err := s.GetGroups()
 	if err != nil {
 		return err
@@ -156,7 +156,7 @@ func (s Service) DeleteGroup(group goldapps.Group) error {
 	return fmt.Errorf("group not found %v", group)
 }
 
-func (s Service) UpdateGroup(groupUpdate goldapps.GroupUpdate) error {
+func (s Service) UpdateGroup(groupUpdate model.GroupUpdate) error {
 	groups, err := s.GetGroups()
 	if err != nil {
 		return err
@@ -178,7 +178,7 @@ func (s Service) UpdateGroup(groupUpdate goldapps.GroupUpdate) error {
 	return fmt.Errorf("group not found %v", groupUpdate.Before)
 }
 
-func (s Service) AddGroup(group goldapps.Group) error {
+func (s Service) AddGroup(group model.Group) error {
 	groups, err := s.GetGroups()
 	if err != nil {
 		return err
@@ -197,7 +197,7 @@ func (s Service) AddGroup(group goldapps.Group) error {
 	return err
 }
 
-func (s Service) GetGroups() ([]goldapps.Group, error) {
+func (s Service) GetGroups() ([]model.Group, error) {
 
 	data, err := s.get()
 	if err != nil {

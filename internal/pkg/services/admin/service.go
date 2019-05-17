@@ -1,7 +1,7 @@
 package admin
 
 import (
-	"github.com/cthit/goldapps"
+	"github.com/cthit/goldapps/internal/pkg/services"
 
 	"google.golang.org/api/admin/directory/v1" // Imports as admin
 	"google.golang.org/api/gmail/v1"           // Imports as gmail
@@ -25,7 +25,7 @@ type googleService struct {
 	domain       string
 }
 
-func NewGoogleService(keyPath string, adminMail string) (goldapps.UpdateService, error) {
+func NewGoogleService(keyPath string, adminMail string) (services.UpdateService, error) {
 
 	jsonKey, err := ioutil.ReadFile(keyPath)
 	if err != nil {
