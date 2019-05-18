@@ -58,40 +58,34 @@ func (actions UserActions) Commit(service services.UpdateService) UserActionErro
 
 	if len(actions.Deletions) > 0 {
 		fmt.Println("(Users) Performing deletions")
-		//		printProgress(0, len(actions.Deletions), 0)
 		for _, user := range actions.Deletions {
 			err := service.DeleteUser(user)
 			if err != nil {
 				// Save error
 				errors.Deletions = append(errors.Deletions, UserAddOrDelError{Action: user, Error: err})
 			}
-			//			printProgress(deletionsIndex+1, len(actions.Deletions), len(errors.Deletions))
 		}
 	}
 
 	if len(actions.Updates) > 0 {
 		fmt.Println("(USers) Performing updates")
-		//		printProgress(0, len(actions.Updates), 0)
 		for _, update := range actions.Updates {
 			err := service.UpdateUser(update)
 			if err != nil {
 				// Save error
 				errors.Updates = append(errors.Updates, UserUpdateError{Action: update, Error: err})
 			}
-			//			printProgress(updatesIndex+1, len(actions.Updates), len(errors.Updates))
 		}
 	}
 
 	if len(actions.Additions) > 0 {
 		fmt.Println("(Groups) Performing additions")
-		//		printProgress(0, len(actions.Additions), 0)
 		for _, user := range actions.Additions {
 			err := service.AddUser(user)
 			if err != nil {
 				// Save error
 				errors.Additions = append(errors.Additions, UserAddOrDelError{Action: user, Error: err})
 			}
-			//			printProgress(additionsIndex+1, len(actions.Additions), len(errors.Additions))
 		}
 	}
 

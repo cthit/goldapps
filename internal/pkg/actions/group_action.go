@@ -65,7 +65,6 @@ func (actions GroupActions) Commit(service services.UpdateService) GroupActionEr
 				// Save error
 				errors.Deletions = append(errors.Deletions, GroupAddOrDelError{Action: group, Error: err})
 			}
-			//			printProgress(deletionsIndex+1, len(actions.Deletions), len(errors.Deletions))
 		}
 	}
 
@@ -78,7 +77,6 @@ func (actions GroupActions) Commit(service services.UpdateService) GroupActionEr
 				// Save error
 				errors.Additions = append(errors.Additions, GroupAddOrDelError{Action: group, Error: err})
 			}
-			//			printProgress(additionsIndex+1, len(actions.Additions), len(errors.Additions))
 		}
 	}
 
@@ -91,7 +89,6 @@ func (actions GroupActions) Commit(service services.UpdateService) GroupActionEr
 				// Save error
 				errors.Updates = append(errors.Updates, GroupUpdateError{Action: update, Error: err})
 			}
-			//			printProgress(updatesIndex+1, len(actions.Updates), len(errors.Updates))
 		}
 	}
 
