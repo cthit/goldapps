@@ -3,6 +3,7 @@ module github.com/cthit/goldapps
 go 1.12
 
 require (
+	github.com/magiconair/properties v1.8.0
 	github.com/sethvargo/go-password v0.1.2
 	github.com/spf13/viper v1.3.2
 	golang.org/x/net v0.0.0-20190509222800-a4d6f7feada5

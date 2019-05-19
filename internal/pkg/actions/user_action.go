@@ -68,7 +68,7 @@ func (actions UserActions) Commit(service services.UpdateService) UserActionErro
 	}
 
 	if len(actions.Updates) > 0 {
-		fmt.Println("(USers) Performing updates")
+		fmt.Println("(Users) Performing updates")
 		for _, update := range actions.Updates {
 			err := service.UpdateUser(update)
 			if err != nil {
