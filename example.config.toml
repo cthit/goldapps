@@ -1,0 +1,41 @@
+[gapps.consumer]
+    servicekeyfile = "gapps.json"
+    adminaccount = "admin@mydomain.ex"
+
+[gapps.provider]
+    servicekeyfile = "gapps.json"
+    adminaccount = "admin@mydomain.ex"
+
+[ldap]
+	url = "ldap.mydomain.ex:636"
+	servername = "mydomain.ex"
+	user = "cn=admin,dc=mydomain,dc=ex"
+	password = "PASSWORD"
+	custom = ["fkit", "kit"]
+
+[ldap.groups]
+	basedn = "ou=groups,dc=mydomain,dc=ex"
+	filter = "(|(objectClass=itGroup)(objectClass=itPosition))"
+	attibutes = ["cn", "displayName", "mail", "member"]
+
+[ldap.users]
+	basedn = "ou=people,dc=mydomain,dc=ex"
+	filter = "(&(objectClass=chalmersstudent))"
+	attibutes = ["uid", "mail"]
+
+#### CUSTOM FILTERS ####
+[ldap.fkit]
+    mail = "fkit@mydomain.ex"
+	basedn = "ou=fkit,ou=groups,dc=mydomain,dc=ex"
+	filter = "(&(objectClass=itGroup))"
+    parent_filter = "(&(ou=%childRDN%))"
+	attibutes = ["cn", "displayName", "mail"]
+
+
+[ldap.kit]
+    mail = "kit@mydomain.ex"
+	basedn = "ou=fkit,ou=groups,dc=mydomain,dc=ex"
+	filter = "(&(objectClass=itGroup)(type=Committee))"
+    parent_filter = "(&(ou=%childRDN%))"
+	attibutes = ["cn", "displayName", "mail"]
+#### ============== ####
