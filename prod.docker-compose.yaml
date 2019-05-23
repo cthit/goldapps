@@ -15,8 +15,8 @@ services:
       "-dry"
     ]
     volumes:
-      - ./cmd/config.toml:/app/config.toml:ro
-      - ./cmd/gapps.json:/app/gapps.json:ro
-      - ./cmd/additions.json:/app/additions.json:ro
+      - ./config.toml:/app/config.toml:ro
+      - ./gapps.json:/app/gapps.json:ro
+      - ./additions.json:/app/additions.json:ro
     environment:
       - WAIT=1h

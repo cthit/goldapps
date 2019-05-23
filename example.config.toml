@@ -1,31 +1,41 @@
 [gapps.consumer]
-    servicekeyfile = "gapps1.json"
-    adminaccount = "admin@example1.ex"
+    servicekeyfile = "gapps.json"
+    adminaccount = "admin@mydomain.ex"
 
 [gapps.provider]
-    servicekeyfile = "gapps2.json"
-    adminaccount = "admin@example2.ex"
+    servicekeyfile = "gapps.json"
+    adminaccount = "admin@mydomain.ex"
 
 [ldap]
-	url = "ldap.example.ex:999"
-	servername = "example.ex"
-	user = "cn=god,dc=example,dc=ex"
-	password = "secret"
-	custom = ["my_custom_filter"]
+	url = "ldap.mydomain.ex:636"
+	servername = "mydomain.ex"
+	user = "cn=admin,dc=mydomain,dc=ex"
+	password = "PASSWORD"
+	custom = ["fkit", "kit"]
 
 [ldap.groups]
-	basedn = "ou=some,ou=groups,dc=example,dc=ex"
-	filter = "(&(objectClass=Group))"
-	attributes = ["cn", "displayName", "mail", "member"]
+	basedn = "ou=groups,dc=mydomain,dc=ex"
+	filter = "(|(objectClass=itGroup)(objectClass=itPosition))"
+	attibutes = ["cn", "displayName", "mail", "member"]
 
 [ldap.users]
-	basedn = "ou=people,dc=example,dc=ex"
-	filter = "(&(objectClass=Group))"
-	attributes = ["uid", "mail"]
+	basedn = "ou=people,dc=mydomain,dc=ex"
+	filter = "(&(objectClass=chalmersstudent))"
+	attibutes = ["uid", "mail"]
 
-[ldap.my_custom_filter]
-    mail = "custom@example.ex"
-    basedn = "ou=groups,dc=chalmers,dc=it"
-    filter = "(&(objectClass=Group))"
+#### CUSTOM FILTERS ####
+[ldap.fkit]
+    mail = "fkit@mydomain.ex"
+	basedn = "ou=fkit,ou=groups,dc=mydomain,dc=ex"
+	filter = "(&(objectClass=itGroup))"
     parent_filter = "(&(ou=%childRDN%))"
-    attributes = ["cn", "displayName", "mail"]
+	attibutes = ["cn", "displayName", "mail"]
+
+
+[ldap.kit]
+    mail = "kit@mydomain.ex"
+	basedn = "ou=fkit,ou=groups,dc=mydomain,dc=ex"
+	filter = "(&(objectClass=itGroup)(type=Committee))"
+    parent_filter = "(&(ou=%childRDN%))"
+	attibutes = ["cn", "displayName", "mail"]
+#### ============== ####

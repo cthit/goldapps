@@ -10,14 +10,14 @@ RUN apk add --update git
 # Copy sources
 RUN mkdir -p /goldapps
 COPY . /goldapps
-WORKDIR /goldapps/cmd
+WORKDIR /goldapps/cmd/goldapps
 
 # Grab dependencies
 #RUN go get -d -v ./...
 
 # build binary
 RUN go install -v
-RUN mkdir /app && mv $GOPATH/bin/cmd /app/goldapps
+RUN mkdir /app && mv $GOPATH/bin/goldapps /app/goldapps
 
 ##########################
 #    PRODUCTION STAGE    #
