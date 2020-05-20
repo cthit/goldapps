@@ -2,13 +2,15 @@ package cli
 
 import (
 	"fmt"
+	"regexp"
+
 	"github.com/cthit/goldapps/internal/pkg/model"
 	"github.com/cthit/goldapps/internal/pkg/services"
 	"github.com/cthit/goldapps/internal/pkg/services/admin"
+	"github.com/cthit/goldapps/internal/pkg/services/gamma"
 	"github.com/cthit/goldapps/internal/pkg/services/json"
 	"github.com/cthit/goldapps/internal/pkg/services/ldap"
 	"github.com/spf13/viper"
-	"regexp"
 )
 
 func getConsumer() services.UpdateService {
@@ -49,7 +51,7 @@ func getConsumer() services.UpdateService {
 func getProvider() services.CollectionService {
 	var from string
 	if flags.interactive {
-		from = askString("which providers would you like to use, 'ldap', 'gapps' or '*.json'?", "ldap")
+		from = askString("which providers would you like to use, 'ldap', 'gapps', 'gamma' or '*.json'?", "ldap")
 	} else {
 		from = flags.from
 	}
@@ -69,6 +71,10 @@ func getProvider() services.CollectionService {
 			panic(err)
 		}
 		return provider
+	case "gamma":
+		provider := gamma.CreateGammaService()
+		return provider
+
 	default:
 		isJson, _ := regexp.MatchString(`.+\.json$`, from)
 		if isJson {
