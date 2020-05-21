@@ -9,11 +9,11 @@ type GammaService struct {
 	gammaUrl string
 }
 
-func CreateGammaService() GammaService {
+func CreateGammaService(apiKey string, url string) (GammaService, error) {
 	return GammaService{
-		apiKey:   "key",
-		gammaUrl: "http://localhost:8081",
-	}
+		apiKey:   apiKey,
+		gammaUrl: url,
+	}, nil
 }
 
 func (s GammaService) GetGroups() ([]model.Group, error) {

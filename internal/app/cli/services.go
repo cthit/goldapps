@@ -72,7 +72,13 @@ func getProvider() services.CollectionService {
 		}
 		return provider
 	case "gamma":
-		provider := gamma.CreateGammaService()
+		provider, err := gamma.CreateGammaService(
+			viper.GetString("gamma.provider.apiKey"),
+			viper.GetString("gamma.provider.url"))
+		if err != nil {
+			fmt.Println("Failed to connect to Gamma")
+			panic(err)
+		}
 		return provider
 
 	default:
