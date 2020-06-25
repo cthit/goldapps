@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/cthit/goldapps/internal/pkg/model"
 )
@@ -129,11 +130,126 @@ func formatGroups(gammaGroups []FKITGroup) (groups []model.Group) {
 	return groups
 }
 
+func put(arr []string, value string) []string {
+	if arr == nil {
+		return []string{value}
+	}
+
+	for _, v := range arr {
+		if v == value {
+			return arr
+		}
+	}
+
+	return append(arr, value)
+}
+
+func emptyGroup(emailPrefix string) model.Group {
+	return model.Group{
+		Email:      fmt.Sprintf("%s@chalmers.it", emailPrefix),
+		Type:       "",
+		Members:    []string{},
+		Aliases:    nil,
+		Expendable: false,
+	}
+}
+
+func getMailPosts(s *GammaService) ([]Post, error) {
+	posts := []Post{}
+	err := gammaReq(s, "/api/groups/posts", &posts)
+	if err != nil {
+		return nil, err
+	}
+
+	mailPosts := []Post{}
+	for _, post := range posts {
+		if post.EmailPrefix != "" {
+			mailPosts = append(mailPosts, post)
+		}
+	}
+
+	return mailPosts, nil
+}
+
+func createMailPostMap(posts []Post) map[string]map[string]model.Group {
+	mailPostMap := make(map[string]map[string]model.Group)
+	for _, post := range posts {
+		mailPostMap[post.EmailPrefix] = make(map[string]model.Group)
+		mailPostMap[post.EmailPrefix]["kommitteer"] = emptyGroup(post.EmailPrefix + ".kommitteer")
+	}
+	return mailPostMap
+}
+
+func insertPostUsers(groups []FKITGroup, mailPostMap *map[string]map[string]model.Group) {
+	var prefix string
+	var groupName string
+	var postMailPrefix string
+	var tmpGroup model.Group
+
+	for _, group := range groups {
+		for _, member := range group.GroupMembers {
+			prefix = member.Post.EmailPrefix
+			groupName = group.SuperGroup.Name
+
+			if prefix == "" || !member.Gdpr || group.SuperGroup.Type == "ALUMNI" {
+				continue
+			}
+
+			if _, ok := (*mailPostMap)[prefix][groupName]; !ok {
+				postMailPrefix = fmt.Sprintf("%s.%s", prefix, groupName)
+				(*mailPostMap)[prefix][groupName] = emptyGroup(postMailPrefix)
+
+				if group.SuperGroup.Type == "COMMITTEE" {
+					tmpGroup = (*mailPostMap)[prefix]["kommitteer"]
+					tmpGroup.Members = append(tmpGroup.Members, postMailPrefix+"@chalmers.it")
+					(*mailPostMap)[prefix]["kommitteer"] = tmpGroup
+				}
+			}
+
+			tmpGroup = (*mailPostMap)[prefix][groupName]
+			tmpGroup.Members = append(tmpGroup.Members, member.Email)
+			(*mailPostMap)[prefix][groupName] = tmpGroup
+		}
+	}
+}
+
+func convertPostMailGroups(mailPostMap *map[string]map[string]model.Group) []model.Group {
+	mailGroups := []model.Group{}
+	var postGroupMail model.Group
+
+	for postName, postMap := range *mailPostMap {
+		postGroupMail = emptyGroup(postName)
+		for _, group := range postMap {
+			mailGroups = append(mailGroups, group)
+			if !strings.Contains(group.Email, "kommitteer") {
+				postGroupMail.Members = append(postGroupMail.Members, group.Email)
+			}
+		}
+		mailGroups = append(mailGroups, postGroupMail)
+	}
+
+	return mailGroups
+}
+
 func (s GammaService) GetGroups() ([]model.Group, error) {
-	groups, _ := getGammaGroups(&s)
-	superGroups, _ := getSuperGroups(&s)
+	groups, err := getGammaGroups(&s)
+	if err != nil {
+		panic(err)
+	}
+	superGroups, err := getSuperGroups(&s)
+	if err != nil {
+		panic(err)
+	}
+	posts, err := getMailPosts(&s)
+	if err != nil {
+		panic(err)
+	}
+
+	mailPostMap := createMailPostMap(posts)
+	insertPostUsers(groups, &mailPostMap)
 
 	formattedGroups := append(formatGroups(groups), formatSuperGroups(superGroups, groups)...)
+	formattedGroups = append(formattedGroups, convertPostMailGroups(&mailPostMap)...)
 
 	return formattedGroups, nil
 }
@@ -146,6 +262,12 @@ func getActiveGroups(s *GammaService) ([]FKITGroup, error) {
 	return groups.GetFKITGroupResponse, err
 }
 
+func shouldHaveMail(group FKITGroup, member FKITUser) bool {
+	return group.Active &&
+		(group.SuperGroup.Type == "COMMITTEE" || group.SuperGroup.Type == "BOARD") &&
+		member.Gdpr
+}
+
 func extractUsers(groups []FKITGroup) []model.User {
 	userFound := make(map[string]bool)
 	users := []model.User{}
@@ -153,7 +275,7 @@ func extractUsers(groups []FKITGroup) []model.User {
 
 	for _, group := range groups {
 		for _, member := range group.GroupMembers {
-			if member.Gdpr && !userFound[member.Cid] {
+			if shouldHaveMail(group, member) && !userFound[member.Cid] {
 				newMember = model.User{}
 				newMember.Cid = member.Cid
 				newMember.FirstName = member.FirstName
