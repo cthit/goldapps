@@ -138,6 +138,41 @@ func (s GammaService) GetGroups() ([]model.Group, error) {
 	return formattedGroups, nil
 }
 
+func getActiveGroups(s *GammaService) ([]FKITGroup, error) {
+	groups := struct {
+		GetFKITGroupResponse []FKITGroup `json:"getFKITGroupResponse"`
+	}{}
+	err := gammaReq(s, "/api/groups/active", &groups)
+	return groups.GetFKITGroupResponse, err
+}
+
+func extractUsers(groups []FKITGroup) []model.User {
+	userFound := make(map[string]bool)
+	users := []model.User{}
+	var newMember model.User
+
+	for _, group := range groups {
+		for _, member := range group.GroupMembers {
+			if member.Gdpr && !userFound[member.Cid] {
+				newMember = model.User{}
+				newMember.Cid = member.Cid
+				newMember.FirstName = member.FirstName
+				newMember.SecondName = member.LastName
+				newMember.Nick = member.Nick
+				newMember.Mail = member.Email
+				users = append(users, newMember)
+				userFound[member.Cid] = true
+			}
+		}
+	}
+
+	return users
+}
+
 func (s GammaService) GetUsers() ([]model.User, error) {
-	return []model.User{}, nil
+	groups, err := getActiveGroups(&s)
+	if err != nil {
+		return nil, err
+	}
+	return extractUsers(groups), nil
 }
