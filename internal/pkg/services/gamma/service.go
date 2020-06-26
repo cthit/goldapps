@@ -86,19 +86,28 @@ func getSuperGroups(s *GammaService) ([]FKITSuperGroup, error) {
 
 //Returns all the Email addresses from the member of a group
 func getMembers(group FKITGroup) []string {
-	members := make([]string, len(group.GroupMembers))
-	for k, v := range group.GroupMembers {
-		members[k] = v.Email
+	members := make(map[string]bool, len(group.GroupMembers))
+	for _, v := range group.GroupMembers {
+		if shouldHaveMail(group, v) {
+			members[fmt.Sprintf("%s@chalmers.it", v.Cid)] = true
+		} else {
+			members[v.Email] = true
+		}
 	}
-	return members
+
+	membersMail := []string{}
+	for mail, _ := range members {
+		membersMail = append(membersMail, mail)
+	}
+	return membersMail
 }
 
 //Fetches the emails of the groups with the specified super group
 func getGroupEmails(superGroupId string, normalGroups []FKITGroup) []string {
 	emails := make([]string, 0)
-	for _, v := range normalGroups {
-		if superGroupId == v.SuperGroup.ID {
-			emails = append(emails, v.Email)
+	for _, group := range normalGroups {
+		if superGroupId == group.SuperGroup.ID {
+			emails = append(emails, group.Email)
 		}
 	}
 
