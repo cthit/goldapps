@@ -2,6 +2,7 @@ package gamma
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/cthit/goldapps/internal/pkg/model"
@@ -161,14 +162,17 @@ func convertPostMailGroups(mailPostMap *map[string]map[string]model.Group) []mod
 func (s GammaService) GetGroups() ([]model.Group, error) {
 	groups, err := getGammaGroups(&s)
 	if err != nil {
+		log.Println("Failed to fetch all groups from Gamma")
 		panic(err)
 	}
 	superGroups, err := getSuperGroups(&s)
 	if err != nil {
+		log.Println("Failed to fetch all super groups from Gamma")
 		panic(err)
 	}
 	posts, err := getMailPosts(&s)
 	if err != nil {
+		log.Println("Failed to fetch all posts from Gamma")
 		panic(err)
 	}
 
