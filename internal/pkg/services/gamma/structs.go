@@ -1,5 +1,7 @@
 package gamma
 
+import "github.com/cthit/goldapps/internal/pkg/model"
+
 type SvEn struct {
 	Sv string `json:"sv"`
 	En string `json:"en"`
@@ -74,4 +76,14 @@ type FKITGroup struct {
 	Active           bool           `json:"active"`
 	GroupMembers     []FKITUser     `json:"groupMembers"`
 	NoAccountMembers []interface{}  `json:"noAccountMembers"`
+}
+
+func (user *FKITUser) toUser() model.User {
+	newUser := model.User{}
+	newUser.Cid = user.Cid
+	newUser.FirstName = user.FirstName
+	newUser.SecondName = user.LastName
+	newUser.Nick = user.Nick
+	newUser.Mail = user.Email
+	return newUser
 }

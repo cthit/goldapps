@@ -1,11 +1,7 @@
 package gamma
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"log"
-	"net/http"
 	"strings"
 
 	"github.com/cthit/goldapps/internal/pkg/model"
@@ -24,64 +20,11 @@ func CreateGammaService(apiKey string, url string) (GammaService, error) {
 	}, nil
 }
 
-//Executes a generic get request to Gamma
-func gammaReq(s *GammaService, endpoint string, response interface{}) error {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s", s.gammaUrl, endpoint), nil)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-
-	req.Header.Set("Authorization", fmt.Sprintf("pre-shared %s", s.apiKey))
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-
-	return nil
-}
-
-//Fetches all the fkit-groups from Gamma
-func getGammaGroups(s *GammaService) ([]FKITGroup, error) {
-	var groups struct {
-		Groups []FKITGroup `json:"groups"`
-	}
-
-	err := gammaReq(s, "/api/groups", &groups)
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-
-	return groups.Groups, nil
-}
-
-//Fetches all super groups from Gamma
-func getSuperGroups(s *GammaService) ([]FKITSuperGroup, error) {
-	var superGroups []FKITSuperGroup
-
-	err := gammaReq(s, "/api/superGroups", &superGroups)
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-
-	return superGroups, nil
+//Determins if the specified user in the specified group should have a gsuit account
+func shouldHaveMail(group FKITGroup, member FKITUser) bool {
+	return group.Active &&
+		(group.SuperGroup.Type == "COMMITTEE" || group.SuperGroup.Type == "BOARD") &&
+		member.Gdpr
 }
 
 //Returns all the Email addresses from the member of a group
@@ -139,20 +82,7 @@ func formatGroups(gammaGroups []FKITGroup) (groups []model.Group) {
 	return groups
 }
 
-func put(arr []string, value string) []string {
-	if arr == nil {
-		return []string{value}
-	}
-
-	for _, v := range arr {
-		if v == value {
-			return arr
-		}
-	}
-
-	return append(arr, value)
-}
-
+//Creates an empty group with a specific email
 func emptyGroup(emailPrefix string) model.Group {
 	return model.Group{
 		Email:      fmt.Sprintf("%s@chalmers.it", emailPrefix),
@@ -163,23 +93,7 @@ func emptyGroup(emailPrefix string) model.Group {
 	}
 }
 
-func getMailPosts(s *GammaService) ([]Post, error) {
-	posts := []Post{}
-	err := gammaReq(s, "/api/groups/posts", &posts)
-	if err != nil {
-		return nil, err
-	}
-
-	mailPosts := []Post{}
-	for _, post := range posts {
-		if post.EmailPrefix != "" {
-			mailPosts = append(mailPosts, post)
-		}
-	}
-
-	return mailPosts, nil
-}
-
+//Creates a map with of <post, <committee>, mailGroup> from all posts
 func createMailPostMap(posts []Post) map[string]map[string]model.Group {
 	mailPostMap := make(map[string]map[string]model.Group)
 	for _, post := range posts {
@@ -189,39 +103,43 @@ func createMailPostMap(posts []Post) map[string]map[string]model.Group {
 	return mailPostMap
 }
 
+//Inserts a new member to the mail group
+func appendMember(mailPostMap *map[string]map[string]model.Group, post string, groupName string, member string) {
+	tmpGroup := (*mailPostMap)[post][groupName]
+	tmpGroup.Members = append(tmpGroup.Members, member)
+	(*mailPostMap)[post][groupName] = tmpGroup
+}
+
+//Populates the map of post-mail-groups with the members for each post
 func insertPostUsers(groups []FKITGroup, mailPostMap *map[string]map[string]model.Group) {
 	var prefix string
 	var groupName string
-	var postMailPrefix string
-	var tmpGroup model.Group
+	var mailPrefix string
 
 	for _, group := range groups {
 		for _, member := range group.GroupMembers {
 			prefix = member.Post.EmailPrefix
 			groupName = group.SuperGroup.Name
 
-			if prefix == "" || !member.Gdpr || group.SuperGroup.Type == "ALUMNI" {
+			if prefix == "" || !shouldHaveMail(group, member) {
 				continue
 			}
 
 			if _, ok := (*mailPostMap)[prefix][groupName]; !ok {
-				postMailPrefix = fmt.Sprintf("%s.%s", prefix, groupName)
-				(*mailPostMap)[prefix][groupName] = emptyGroup(postMailPrefix)
+				mailPrefix = fmt.Sprintf("%s.%s", prefix, groupName)
+				(*mailPostMap)[prefix][groupName] = emptyGroup(mailPrefix)
 
 				if group.SuperGroup.Type == "COMMITTEE" {
-					tmpGroup = (*mailPostMap)[prefix]["kommitteer"]
-					tmpGroup.Members = append(tmpGroup.Members, postMailPrefix+"@chalmers.it")
-					(*mailPostMap)[prefix]["kommitteer"] = tmpGroup
+					appendMember(mailPostMap, prefix, "kommitteer", mailPrefix+"@chalmers.it")
 				}
 			}
 
-			tmpGroup = (*mailPostMap)[prefix][groupName]
-			tmpGroup.Members = append(tmpGroup.Members, member.Email)
-			(*mailPostMap)[prefix][groupName] = tmpGroup
+			appendMember(mailPostMap, prefix, groupName, member.Email)
 		}
 	}
 }
 
+//Converts the map of post-mail-groups to an array of post-mail-groups
 func convertPostMailGroups(mailPostMap *map[string]map[string]model.Group) []model.Group {
 	mailGroups := []model.Group{}
 	var postGroupMail model.Group
@@ -263,35 +181,15 @@ func (s GammaService) GetGroups() ([]model.Group, error) {
 	return formattedGroups, nil
 }
 
-func getActiveGroups(s *GammaService) ([]FKITGroup, error) {
-	groups := struct {
-		GetFKITGroupResponse []FKITGroup `json:"getFKITGroupResponse"`
-	}{}
-	err := gammaReq(s, "/api/groups/active", &groups)
-	return groups.GetFKITGroupResponse, err
-}
-
-func shouldHaveMail(group FKITGroup, member FKITUser) bool {
-	return group.Active &&
-		(group.SuperGroup.Type == "COMMITTEE" || group.SuperGroup.Type == "BOARD") &&
-		member.Gdpr
-}
-
+//Fetches all the users in the specified groups
 func extractUsers(groups []FKITGroup) []model.User {
 	userFound := make(map[string]bool)
 	users := []model.User{}
-	var newMember model.User
 
 	for _, group := range groups {
 		for _, member := range group.GroupMembers {
 			if shouldHaveMail(group, member) && !userFound[member.Cid] {
-				newMember = model.User{}
-				newMember.Cid = member.Cid
-				newMember.FirstName = member.FirstName
-				newMember.SecondName = member.LastName
-				newMember.Nick = member.Nick
-				newMember.Mail = member.Email
-				users = append(users, newMember)
+				users = append(users, member.toUser())
 				userFound[member.Cid] = true
 			}
 		}
