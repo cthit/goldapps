@@ -16,11 +16,11 @@ type NormalGroupList struct {
 	model.Group
 }
 
-func (li *NormalGroupList) insert(group FKITGroup) *NormalGroupList {
+func (li *NormalGroupList) insert(group *FKITGroup) *NormalGroupList {
 	//If you have reached the last item of the chain
 	//create a new item connected to a group
 	if li.Next == nil {
-		return li.newListItem(group, li)
+		return li.newListItem(group)
 	}
 
 	//If you have reached the correct group
@@ -35,7 +35,7 @@ func (li *NormalGroupList) insert(group FKITGroup) *NormalGroupList {
 }
 
 //Creates a group item which contains the group email, members and a pointer to the next item
-func (*NormalGroupList) newListItem(group FKITGroup, next *NormalGroupList) *NormalGroupList {
+func (next *NormalGroupList) newListItem(group *FKITGroup) *NormalGroupList {
 	return &NormalGroupList{
 		Next:   next,
 		Active: group.Active || group.SuperGroup.Type == "ALUMNI",
@@ -64,11 +64,11 @@ func (li *NormalGroupList) toGroups() ([]model.Group, []model.Group) {
 	return active, append(inactive, li.Group)
 }
 
-func (li *SuperGroupList) insert(group FKITGroup) *SuperGroupList {
+func (li *SuperGroupList) insert(group *FKITGroup) *SuperGroupList {
 	//If you have reached the last item of the chain
 	//create a new item connected to a super group
 	if li.Next == nil {
-		return li.newListItem(group, li)
+		return li.newListItem(group)
 	}
 
 	//If you have reached the correct super group
@@ -83,7 +83,7 @@ func (li *SuperGroupList) insert(group FKITGroup) *SuperGroupList {
 }
 
 //Creates a super group item which contains the group email, members and a pointer to the next item
-func (*SuperGroupList) newListItem(group FKITGroup, next *SuperGroupList) *SuperGroupList {
+func (next *SuperGroupList) newListItem(group *FKITGroup) *SuperGroupList {
 	memberGroups := &NormalGroupList{}
 	return &SuperGroupList{
 		Next:         next,

@@ -117,9 +117,9 @@ func TestList(t *testing.T) {
 		GroupMembers: []FKITUser{userA, userB, userB},
 	}
 
-	list = list.insert(groupA)
-	list = list.insert(groupB)
-	list = list.insert(groupC)
+	list = list.insert(&groupA)
+	list = list.insert(&groupB)
+	list = list.insert(&groupC)
 	active, inactive := list.toGroups()
 	t.Log(active)
 	t.Log(inactive)
