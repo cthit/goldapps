@@ -23,9 +23,13 @@ func CreateGammaService(apiKey string, url string) (GammaService, error) {
 
 //Determins if the specified user in the specified group should have a gsuit account
 func shouldHaveMail(group *FKITGroup, member *FKITUser) bool {
+	return isKit(group) && member.Gdpr
+}
+
+//Determins if specified group is a member of KIT
+func isKit(group *FKITGroup) bool {
 	return group.Active &&
-		(group.SuperGroup.Type == "COMMITTEE" || group.SuperGroup.Type == "BOARD") &&
-		member.Gdpr
+		(group.SuperGroup.Type == "COMMITTEE" || group.SuperGroup.Type == "BOARD" || group.SuperGroup.Type == "FUNCTIONARIES")
 }
 
 //Returns all the Email addresses from the member of a group
@@ -122,14 +126,15 @@ func convertPostMailGroups(mailPostMap *map[string]map[string]model.Group) []mod
 	return mailGroups
 }
 
+//Creates all mail groups from the fkit groups except post specific groups
 func getGroups(fkitGroups []FKITGroup) []model.Group {
 	groupList := &SuperGroupList{}
 	for _, group := range fkitGroups {
 		groupList = groupList.insert(&group)
 	}
 
-	fkit, groups := groupList.toGroups()
-	return append(groups, fkit)
+	fkit, kit, groups := groupList.toGroups()
+	return append(groups, fkit, kit)
 }
 
 func (s GammaService) GetGroups() ([]model.Group, error) {

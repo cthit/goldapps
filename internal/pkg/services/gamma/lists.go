@@ -7,6 +7,7 @@ import "github.com/cthit/goldapps/internal/pkg/model"
 type SuperGroupList struct {
 	Next         *SuperGroupList
 	MemberGroups *NormalGroupList
+	Kit          bool
 	model.Group
 }
 
@@ -88,6 +89,7 @@ func (next *SuperGroupList) newListItem(group *FKITGroup) *SuperGroupList {
 	return &SuperGroupList{
 		Next:         next,
 		MemberGroups: memberGroups.insert(group),
+		Kit:          isKit(group),
 		Group: model.Group{
 			Email:      group.SuperGroup.Email,
 			Type:       group.SuperGroup.Type,
@@ -98,21 +100,10 @@ func (next *SuperGroupList) newListItem(group *FKITGroup) *SuperGroupList {
 	}
 }
 
-//Creates the base for the fkit group
-func createBaseSuperGroup() (model.Group, []model.Group) {
-	return model.Group{
-		Email:      "fkit@chalmers.it",
-		Type:       "",
-		Members:    []string{},
-		Aliases:    nil,
-		Expendable: false,
-	}, []model.Group{}
-}
-
 //Returns the fkit group and all the rest of the groups
-func (li *SuperGroupList) toGroups() (model.Group, []model.Group) {
+func (li *SuperGroupList) toGroups() (model.Group, model.Group, []model.Group) {
 	if li.Next == nil {
-		return createBaseSuperGroup()
+		return emptyGroup("fkit"), emptyGroup("kit"), []model.Group{}
 	}
 
 	activeGroups, inactiveGroups := li.MemberGroups.toGroups()
@@ -122,13 +113,17 @@ func (li *SuperGroupList) toGroups() (model.Group, []model.Group) {
 		superGroup.Members = append(superGroup.Members, group.Email)
 	}
 
-	fkit, groups := li.Next.toGroups()
+	fkit, kit, groups := li.Next.toGroups()
 	groups = append(groups, inactiveGroups...)
 	groups = append(groups, activeGroups...)
+
+	if li.Kit {
+		kit.Members = append(kit.Members, li.Email)
+	}
 
 	if li.Type != "ALUMNI" {
 		fkit.Members = append(fkit.Members, li.Email)
 	}
 
-	return fkit, append(groups, superGroup)
+	return fkit, kit, append(groups, superGroup)
 }

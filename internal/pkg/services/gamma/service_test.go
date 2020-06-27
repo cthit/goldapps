@@ -3,6 +3,7 @@ package gamma
 import (
 	"testing"
 
+	"github.com/cthit/goldapps/internal/pkg/model"
 	"github.com/magiconair/properties/assert"
 )
 
@@ -79,8 +80,6 @@ func TestGetMembers(t *testing.T) {
 }
 
 func TestList(t *testing.T) {
-	list := &SuperGroupList{}
-
 	userA, userB := FKITUser{
 		Cid:   "usera",
 		Email: "usera@gmail.com",
@@ -117,11 +116,13 @@ func TestList(t *testing.T) {
 		GroupMembers: []FKITUser{userA, userB, userB},
 	}
 
-	list = list.insert(&groupA)
-	list = list.insert(&groupB)
-	list = list.insert(&groupC)
-	active, inactive := list.toGroups()
-	t.Log(active)
-	t.Log(inactive)
-	assert.Equal(t, true, false)
+	want := []model.Group{{"drawit19@chalmers.it", "SOCIETY", []string{"usera@gmail.com", "userb@gmail.com"}, []string{}, false},
+		{"drawit20@chalmers.it", "SOCIETY", []string{"usera@gmail.com", "userb@gmail.com"}, []string{}, false},
+		{"drawit@chalmers.it", "SOCIETY", []string{"drawit20@chalmers.it"}, []string{}, false},
+		{"digit20@chalmers.it", "COMMITTEE", []string{"usera@chalmers.it", "userb@chalmers.it"}, []string{}, false},
+		{"digIT@chalmers.it", "COMMITTEE", []string{"digit20@chalmers.it"}, []string{}, false},
+		{"fkit@chalmers.it", "", []string{"drawit@chalmers.it", "digIT@chalmers.it"}, []string{}, false},
+		{"kit@chalmers.it", "", []string{"digIT@chalmers.it"}, []string{}, false}}
+
+	assert.Equal(t, getGroups([]FKITGroup{groupA, groupB, groupC}), want)
 }
