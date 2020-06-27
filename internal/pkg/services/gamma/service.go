@@ -40,7 +40,7 @@ func getMembers(group *FKITGroup) []string {
 	}
 
 	membersMail := []string{}
-	for mail, _ := range members {
+	for mail := range members {
 		membersMail = append(membersMail, mail)
 	}
 	return membersMail

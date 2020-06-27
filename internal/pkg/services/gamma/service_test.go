@@ -39,14 +39,14 @@ func TestShouldHaveMail(t *testing.T) {
 		GroupMembers: []FKITUser{userA, userB},
 	}
 
-	assert.Equal(t, shouldHaveMail(groupA, userA), false)
-	assert.Equal(t, shouldHaveMail(groupA, userB), false)
-	assert.Equal(t, shouldHaveMail(groupB, userA), true)
-	assert.Equal(t, shouldHaveMail(groupB, userB), false)
-	assert.Equal(t, shouldHaveMail(groupC, userA), false)
-	assert.Equal(t, shouldHaveMail(groupC, userB), false)
-	assert.Equal(t, shouldHaveMail(groupD, userA), true)
-	assert.Equal(t, shouldHaveMail(groupD, userB), false)
+	assert.Equal(t, shouldHaveMail(&groupA, &userA), false)
+	assert.Equal(t, shouldHaveMail(&groupA, &userB), false)
+	assert.Equal(t, shouldHaveMail(&groupB, &userA), true)
+	assert.Equal(t, shouldHaveMail(&groupB, &userB), false)
+	assert.Equal(t, shouldHaveMail(&groupC, &userA), false)
+	assert.Equal(t, shouldHaveMail(&groupC, &userB), false)
+	assert.Equal(t, shouldHaveMail(&groupD, &userA), true)
+	assert.Equal(t, shouldHaveMail(&groupD, &userB), false)
 }
 
 func TestGetMembers(t *testing.T) {
@@ -74,8 +74,8 @@ func TestGetMembers(t *testing.T) {
 		GroupMembers: []FKITUser{userA, userB, userB},
 	}
 
-	assert.Equal(t, getMembers(groupA), []string{"usera@chalmers.it", "userb@chalmers.it"})
-	assert.Equal(t, getMembers(groupB), []string{"usera@gmail.com", "userb@gmail.com"})
+	assert.Equal(t, getMembers(&groupA), []string{"usera@chalmers.it", "userb@chalmers.it"})
+	assert.Equal(t, getMembers(&groupB), []string{"usera@gmail.com", "userb@gmail.com"})
 }
 
 func TestList(t *testing.T) {
