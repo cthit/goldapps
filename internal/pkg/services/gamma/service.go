@@ -46,43 +46,6 @@ func getMembers(group FKITGroup) []string {
 	return membersMail
 }
 
-//Fetches the emails of the groups with the specified super group
-func getGroupEmails(superGroupId string, normalGroups []FKITGroup) []string {
-	emails := make([]string, 0)
-	for _, group := range normalGroups {
-		if superGroupId == group.SuperGroup.ID {
-			emails = append(emails, group.Email)
-		}
-	}
-
-	return emails
-}
-
-//Formats a list of super groups to a list of model.Group
-func formatSuperGroups(superGroups []FKITSuperGroup, normalGroups []FKITGroup) (groups []model.Group) {
-	groups = make([]model.Group, len(superGroups))
-	for k, v := range superGroups {
-		groups[k].Email = v.Email
-		groups[k].Type = v.Type
-		groups[k].Members = getGroupEmails(v.ID, normalGroups)
-		groups[k].Expendable = false
-	}
-
-	return groups
-}
-
-//Formats a list of FKIT-groups to a list of model.Group
-func formatGroups(gammaGroups []FKITGroup) (groups []model.Group) {
-	groups = make([]model.Group, len(gammaGroups))
-	for k, v := range gammaGroups {
-		groups[k].Email = v.Email
-		groups[k].Type = v.SuperGroup.Type
-		groups[k].Members = getMembers(v)
-		groups[k].Expendable = false
-	}
-	return groups
-}
-
 //Creates an empty group with a specific email
 func emptyGroup(emailPrefix string) model.Group {
 	return model.Group{
@@ -159,15 +122,20 @@ func convertPostMailGroups(mailPostMap *map[string]map[string]model.Group) []mod
 	return mailGroups
 }
 
+func getGroups(fkitGroups []FKITGroup) []model.Group {
+	groupList := &SuperGroupList{}
+	for _, group := range fkitGroups {
+		groupList = groupList.insert(group)
+	}
+
+	fkit, groups := groupList.toGroups()
+	return append(groups, fkit)
+}
+
 func (s GammaService) GetGroups() ([]model.Group, error) {
 	groups, err := getGammaGroups(&s)
 	if err != nil {
 		log.Println("Failed to fetch all groups from Gamma")
-		panic(err)
-	}
-	superGroups, err := getSuperGroups(&s)
-	if err != nil {
-		log.Println("Failed to fetch all super groups from Gamma")
 		panic(err)
 	}
 	posts, err := getMailPosts(&s)
@@ -179,7 +147,7 @@ func (s GammaService) GetGroups() ([]model.Group, error) {
 	mailPostMap := createMailPostMap(posts)
 	insertPostUsers(groups, &mailPostMap)
 
-	formattedGroups := append(formatGroups(groups), formatSuperGroups(superGroups, groups)...)
+	formattedGroups := getGroups(groups)
 	formattedGroups = append(formattedGroups, convertPostMailGroups(&mailPostMap)...)
 
 	return formattedGroups, nil

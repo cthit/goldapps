@@ -77,3 +77,51 @@ func TestGetMembers(t *testing.T) {
 	assert.Equal(t, getMembers(groupA), []string{"usera@chalmers.it", "userb@chalmers.it"})
 	assert.Equal(t, getMembers(groupB), []string{"usera@gmail.com", "userb@gmail.com"})
 }
+
+func TestList(t *testing.T) {
+	list := &SuperGroupList{}
+
+	userA, userB := FKITUser{
+		Cid:   "usera",
+		Email: "usera@gmail.com",
+		Gdpr:  true,
+	}, FKITUser{
+		Cid:   "userb",
+		Email: "userb@gmail.com",
+		Gdpr:  true,
+	}
+
+	groupA, groupB, groupC := FKITGroup{
+		Email: "digit20@chalmers.it",
+		SuperGroup: FKITSuperGroup{
+			Type:  "COMMITTEE",
+			Email: "digIT@chalmers.it",
+		},
+		Active:       true,
+		GroupMembers: []FKITUser{userA, userB},
+	}, FKITGroup{
+		Email: "drawit20@chalmers.it",
+		SuperGroup: FKITSuperGroup{
+			Type:  "SOCIETY",
+			Email: "drawit@chalmers.it",
+		},
+		Active:       true,
+		GroupMembers: []FKITUser{userA, userB, userB},
+	}, FKITGroup{
+		Email: "drawit19@chalmers.it",
+		SuperGroup: FKITSuperGroup{
+			Type:  "SOCIETY",
+			Email: "drawit@chalmers.it",
+		},
+		Active:       false,
+		GroupMembers: []FKITUser{userA, userB, userB},
+	}
+
+	list = list.insert(groupA)
+	list = list.insert(groupB)
+	list = list.insert(groupC)
+	active, inactive := list.toGroups()
+	t.Log(active)
+	t.Log(inactive)
+	assert.Equal(t, true, false)
+}
