@@ -23,24 +23,28 @@ func CreateGammaService(apiKey string, url string) (GammaService, error) {
 
 //Determins if the specified user in the specified group should have a gsuit account
 func shouldHaveMail(group *FKITGroup, member *FKITUser) bool {
-	return isKit(group) && member.Gdpr
+	return isKit(group) && member.Gdpr && group.Active
 }
 
 //Determins if specified group is a member of KIT
 func isKit(group *FKITGroup) bool {
-	return group.Active &&
-		(group.SuperGroup.Type == "COMMITTEE" || group.SuperGroup.Type == "BOARD" || group.SuperGroup.Type == "FUNCTIONARIES")
+	return (group.SuperGroup.Type == "COMMITTEE" || group.SuperGroup.Type == "BOARD" || group.SuperGroup.Type == "FUNCTIONARIES")
+}
+
+//Returns the email which should be used for a specific user
+func getMemberEmail(group *FKITGroup, member *FKITUser) string {
+	if shouldHaveMail(group, member) {
+		return fmt.Sprintf("%s@chalmers.it", member.Cid)
+	}
+
+	return member.Email
 }
 
 //Returns all the Email addresses from the member of a group
 func getMembers(group *FKITGroup) []string {
 	members := make(map[string]bool, len(group.GroupMembers))
 	for _, v := range group.GroupMembers {
-		if shouldHaveMail(group, &v) {
-			members[fmt.Sprintf("%s@chalmers.it", v.Cid)] = true
-		} else {
-			members[v.Email] = true
-		}
+		members[getMemberEmail(group, &v)] = true
 	}
 
 	membersMail := []string{}
@@ -89,7 +93,7 @@ func insertPostUsers(groups []FKITGroup, mailPostMap *map[string]map[string]mode
 			prefix = member.Post.EmailPrefix
 			groupName = group.SuperGroup.Name
 
-			if prefix == "" || !shouldHaveMail(&group, &member) {
+			if prefix == "" {
 				continue
 			}
 
@@ -97,12 +101,12 @@ func insertPostUsers(groups []FKITGroup, mailPostMap *map[string]map[string]mode
 				mailPrefix = fmt.Sprintf("%s.%s", prefix, groupName)
 				(*mailPostMap)[prefix][groupName] = emptyGroup(mailPrefix)
 
-				if group.SuperGroup.Type == "COMMITTEE" {
+				if isKit(&group) {
 					appendMember(mailPostMap, prefix, "kommitteer", mailPrefix+"@chalmers.it")
 				}
 			}
 
-			appendMember(mailPostMap, prefix, groupName, member.Email)
+			appendMember(mailPostMap, prefix, groupName, getMemberEmail(&group, &member))
 		}
 	}
 }
@@ -148,9 +152,14 @@ func (s GammaService) GetGroups() ([]model.Group, error) {
 		log.Println("Failed to fetch all posts from Gamma")
 		panic(err)
 	}
+	activeGroups, err := getActiveGroups(&s)
+	if err != nil {
+		log.Println("Failed to fetch active groups")
+		panic(err)
+	}
 
 	mailPostMap := createMailPostMap(posts)
-	insertPostUsers(groups, &mailPostMap)
+	insertPostUsers(activeGroups, &mailPostMap)
 
 	formattedGroups := getGroups(groups)
 	formattedGroups = append(formattedGroups, convertPostMailGroups(&mailPostMap)...)
@@ -166,7 +175,7 @@ func extractUsers(groups []FKITGroup) []model.User {
 	for _, group := range groups {
 		for _, member := range group.GroupMembers {
 			if shouldHaveMail(&group, &member) && !userFound[member.Cid] {
-				users = append(users, member.toUser())
+				users = append(users, member.toUser(&group))
 				userFound[member.Cid] = true
 			}
 		}

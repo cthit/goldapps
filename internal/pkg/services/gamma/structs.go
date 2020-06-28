@@ -1,6 +1,9 @@
 package gamma
 
-import "github.com/cthit/goldapps/internal/pkg/model"
+import (
+	"fmt"
+	"github.com/cthit/goldapps/internal/pkg/model"
+)
 
 type SvEn struct {
 	Sv string `json:"sv"`
@@ -78,12 +81,18 @@ type FKITGroup struct {
 	NoAccountMembers []interface{}  `json:"noAccountMembers"`
 }
 
-func (user *FKITUser) toUser() model.User {
+func (user *FKITUser) toUser(group *FKITGroup) model.User {
 	newUser := model.User{}
 	newUser.Cid = user.Cid
 	newUser.FirstName = user.FirstName
 	newUser.SecondName = user.LastName
 	newUser.Nick = user.Nick
-	newUser.Mail = user.Email
+
+	if shouldHaveMail(group, user) {
+		newUser.Mail = fmt.Sprintf("%s@chalmers.it", user.Cid)
+	} else {
+		newUser.Mail = user.Email
+	}
+
 	return newUser
 }
