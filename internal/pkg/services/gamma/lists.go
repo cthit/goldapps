@@ -82,6 +82,11 @@ func (li *NormalGroupList) toGroups() ([]model.Group, []model.Group) {
 }
 
 func (li *SuperGroupList) insert(group *FKITGroup) *SuperGroupList {
+	//Ignoring admin group
+	if group.SuperGroup.Type == "ADMIN" {
+		return li
+	}
+
 	//If you have reached the last item of the chain
 	//create a new item connected to a super group
 	if li.Next == nil {
