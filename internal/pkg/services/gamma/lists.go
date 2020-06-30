@@ -103,7 +103,7 @@ func (next *SuperGroupList) newListItem(group *FKITGroup) *SuperGroupList {
 //Returns the fkit group and all the rest of the groups
 func (li *SuperGroupList) toGroups() (model.Group, model.Group, []model.Group) {
 	if li.Next == nil {
-		return emptyGroup("fkit"), emptyGroup("kit"), []model.Group{}
+		return emptyGroup("grupper"), emptyGroup("kommitteer"), []model.Group{}
 	}
 
 	activeGroups, inactiveGroups := li.MemberGroups.toGroups()
