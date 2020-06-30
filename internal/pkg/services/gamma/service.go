@@ -130,6 +130,17 @@ func convertPostMailGroups(mailPostMap *map[string]map[string]model.Group) []mod
 	return mailGroups
 }
 
+func groupOfGroups(mailPrefix string, requiredPrefix string, groups []model.Group) model.Group {
+	newGroup := emptyGroup(mailPrefix)
+	for _, group := range groups {
+		if strings.HasPrefix(group.Email, requiredPrefix) {
+			newGroup.Members = append(newGroup.Members, group.Email)
+		}
+	}
+
+	return newGroup
+}
+
 //Creates all mail groups from the fkit groups except post specific groups
 func getGroups(fkitGroups []FKITGroup) []model.Group {
 	groupList := &SuperGroupList{}
@@ -150,7 +161,13 @@ func getPostMails(fkitGroups []FKITGroup) []model.Group {
 	}
 
 	kit, other := groupList.toGroups()
-	return append(kit, other...)
+
+	ordforanden := groupOfGroups("ordforanden", "ordf", append(kit, other...))
+	kitOrdforanden := groupOfGroups("ordforanden.kommitteer", "ordf", kit)
+	kassorer := groupOfGroups("kassorer", "kassor", append(kit, other...))
+	kitKassorer := groupOfGroups("kassorer.kommitteer", "kassor", kit)
+
+	return append(append(kit, ordforanden, kitOrdforanden, kassorer, kitKassorer), other...)
 }
 
 func (s GammaService) GetGroups() ([]model.Group, error) {
