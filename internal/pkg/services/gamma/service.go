@@ -141,28 +141,40 @@ func getGroups(fkitGroups []FKITGroup) []model.Group {
 	return append(groups, fkit, kit)
 }
 
+func getPostMails(fkitGroups []FKITGroup) []model.Group {
+	groupList := &PostGroupList{}
+	for _, group := range fkitGroups {
+		for _, member := range group.GroupMembers {
+			groupList = groupList.insert(&group, &member)
+		}
+	}
+
+	kit, other := groupList.toGroups()
+	return append(kit, other...)
+}
+
 func (s GammaService) GetGroups() ([]model.Group, error) {
 	groups, err := getGammaGroups(&s)
 	if err != nil {
 		log.Println("Failed to fetch all groups from Gamma")
 		panic(err)
 	}
-	posts, err := getMailPosts(&s)
+	/*posts, err := getMailPosts(&s)
 	if err != nil {
 		log.Println("Failed to fetch all posts from Gamma")
 		panic(err)
-	}
+	}*/
 	activeGroups, err := getActiveGroups(&s)
 	if err != nil {
 		log.Println("Failed to fetch active groups")
 		panic(err)
 	}
 
-	mailPostMap := createMailPostMap(posts)
-	insertPostUsers(activeGroups, &mailPostMap)
+	/*mailPostMap := createMailPostMap(posts)
+	insertPostUsers(activeGroups, &mailPostMap)*/
 
 	formattedGroups := getGroups(groups)
-	formattedGroups = append(formattedGroups, convertPostMailGroups(&mailPostMap)...)
+	formattedGroups = append(formattedGroups, getPostMails(activeGroups)...)
 
 	return formattedGroups, nil
 }

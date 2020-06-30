@@ -1,6 +1,10 @@
 package gamma
 
-import "github.com/cthit/goldapps/internal/pkg/model"
+import (
+	"fmt"
+
+	"github.com/cthit/goldapps/internal/pkg/model"
+)
 
 //Both SuperGroupList and NormalGroupList follows a linked list structure
 
@@ -14,6 +18,14 @@ type SuperGroupList struct {
 type NormalGroupList struct {
 	Next   *NormalGroupList
 	Active bool
+	model.Group
+}
+
+type PostGroupList struct {
+	Next        *PostGroupList
+	GroupName   string
+	EmailPrefix string
+	Kit         bool
 	model.Group
 }
 
@@ -134,4 +146,54 @@ func (li *SuperGroupList) toGroups() (model.Group, model.Group, []model.Group) {
 	}
 
 	return fkit, kit, append(groups, superGroup)
+}
+
+func (pl *PostGroupList) newListItem(group *FKITGroup, member *FKITUser) *PostGroupList {
+	return &PostGroupList{
+		Next:        pl,
+		EmailPrefix: member.Post.EmailPrefix,
+		GroupName:   group.SuperGroup.Name,
+		Kit:         isKit(group),
+		Group: model.Group{
+			Email:      fmt.Sprintf("%s.%s@chalmers.it", member.Post.EmailPrefix, group.SuperGroup.Name),
+			Members:    []string{getMemberEmail(group, member)},
+			Aliases:    nil,
+			Expendable: false,
+		},
+	}
+}
+
+func (pl *PostGroupList) insert(group *FKITGroup, member *FKITUser) *PostGroupList {
+	if !group.Active || !member.Gdpr || member.Post.EmailPrefix == "" {
+		return pl
+	}
+
+	if pl.Next == nil {
+		return pl.newListItem(group, member)
+	}
+
+	if pl.GroupName == group.SuperGroup.Name &&
+		pl.EmailPrefix == member.Post.EmailPrefix {
+		pl.Members = append(pl.Members, getMemberEmail(group, member))
+		return pl
+	}
+
+	pl.Next = pl.Next.insert(group, member)
+	return pl
+}
+
+func (pl *PostGroupList) toGroups() ([]model.Group, []model.Group) {
+	if pl.Next == nil {
+		return []model.Group{}, []model.Group{}
+	}
+
+	kit, other := pl.Next.toGroups()
+
+	if pl.Kit {
+		kit = append(kit, pl.Group)
+	} else {
+		other = append(other, pl.Group)
+	}
+
+	return kit, other
 }

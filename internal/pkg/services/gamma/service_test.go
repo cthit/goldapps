@@ -97,6 +97,28 @@ func TestGetGroups(t *testing.T) {
 	assert.Equal(t, getGroups(groups), want)
 }
 
+func TestGetPostMails(t *testing.T) {
+	userA := FKITUser{
+		Cid: "usera",
+		Post: Post{
+			EmailPrefix: "ordf",
+		},
+		Gdpr:  true,
+		Email: "usera@gamil.com",
+	}
+
+	groupA := FKITGroup{
+		Active: true,
+		SuperGroup: FKITSuperGroup{
+			Type: "COMMITTEE",
+			Name: "supergroup",
+		},
+		GroupMembers: []FKITUser{userA},
+	}
+
+	assert.Equal(t, getPostMails([]FKITGroup{groupA}), []model.Group{{"ordf.supergroup@chalmers.it", "", []string{"usera@chalmers.it"}, nil, false}})
+}
+
 func TestList(t *testing.T) {
 	userA, userB := FKITUser{
 		Cid:   "usera",
