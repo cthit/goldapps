@@ -58,6 +58,10 @@ func (li *NormalGroupList) toGroups() ([]model.Group, []model.Group) {
 
 	active, inactive := li.Next.toGroups()
 
+	if len(li.Members) <= 0 {
+		return active, inactive
+	}
+
 	if li.Active {
 		return append(active, li.Group), inactive
 	}
@@ -111,6 +115,10 @@ func (li *SuperGroupList) toGroups() (model.Group, model.Group, []model.Group) {
 
 	for _, group := range activeGroups {
 		superGroup.Members = append(superGroup.Members, group.Email)
+	}
+
+	if len(superGroup.Members) <= 0 {
+		superGroup.Members = []string{"ita.styrit@chalmers.it"}
 	}
 
 	fkit, kit, groups := li.Next.toGroups()
