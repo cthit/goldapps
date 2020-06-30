@@ -79,6 +79,24 @@ func TestGetMembers(t *testing.T) {
 	assert.Equal(t, getMembers(&groupB), []string{"usera@gmail.com", "userb@gmail.com"})
 }
 
+func TestGetGroups(t *testing.T) {
+	groups := []FKITGroup{
+		{
+			Active: true,
+			SuperGroup: FKITSuperGroup{
+				Type:  "COMMITTEE",
+				Email: "digit@chalmers.it",
+			},
+		},
+	}
+
+	want := []model.Group{{"digit@chalmers.it", "COMMITTEE", []string{"ita.styrit@chalmers.it"}, nil, false},
+		{"grupper@chalmers.it", "", []string{"digit@chalmers.it"}, nil, false},
+		{"kommitteer@chalmers.it", "", []string{"digit@chalmers.it"}, nil, false}}
+
+	assert.Equal(t, getGroups(groups), want)
+}
+
 func TestList(t *testing.T) {
 	userA, userB := FKITUser{
 		Cid:   "usera",
