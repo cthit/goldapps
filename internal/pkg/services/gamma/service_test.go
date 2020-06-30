@@ -58,7 +58,7 @@ func TestGetMembers(t *testing.T) {
 	}, FKITUser{
 		Cid:   "userb",
 		Email: "userb@gmail.com",
-		Gdpr:  true,
+		Gdpr:  false,
 	}
 
 	groupA, groupB := FKITGroup{
@@ -75,7 +75,7 @@ func TestGetMembers(t *testing.T) {
 		GroupMembers: []FKITUser{userA, userB, userB},
 	}
 
-	assert.Equal(t, getMembers(&groupA), []string{"usera@chalmers.it", "userb@chalmers.it"})
+	assert.Equal(t, getMembers(&groupA), []string{"usera@chalmers.it"})
 	assert.Equal(t, getMembers(&groupB), []string{"usera@gmail.com", "userb@gmail.com"})
 }
 
@@ -116,53 +116,11 @@ func TestGetPostMails(t *testing.T) {
 		GroupMembers: []FKITUser{userA},
 	}
 
-	assert.Equal(t, getPostMails([]FKITGroup{groupA}), []model.Group{{"ordf.supergroup@chalmers.it", "", []string{"usera@chalmers.it"}, nil, false}})
-}
+	want := []model.Group{{"ordf.supergroup@chalmers.it", "", []string{"usera@chalmers.it"}, nil, false},
+		{"ordforanden@chalmers.it", "", []string{"ordf.supergroup@chalmers.it"}, nil, false},
+		{"ordforanden.kommitteer@chalmers.it", "", []string{"ordf.supergroup@chalmers.it"}, nil, false},
+		{"kassorer@chalmers.it", "", []string{}, nil, false},
+		{"kassorer.kommitteer@chalmers.it", "", []string{}, nil, false}}
 
-func TestList(t *testing.T) {
-	userA, userB := FKITUser{
-		Cid:   "usera",
-		Email: "usera@gmail.com",
-		Gdpr:  true,
-	}, FKITUser{
-		Cid:   "userb",
-		Email: "userb@gmail.com",
-		Gdpr:  true,
-	}
-
-	groupA, groupB, groupC := FKITGroup{
-		Email: "digit20@chalmers.it",
-		SuperGroup: FKITSuperGroup{
-			Type:  "COMMITTEE",
-			Email: "digIT@chalmers.it",
-		},
-		Active:       true,
-		GroupMembers: []FKITUser{userA, userB},
-	}, FKITGroup{
-		Email: "drawit20@chalmers.it",
-		SuperGroup: FKITSuperGroup{
-			Type:  "SOCIETY",
-			Email: "drawit@chalmers.it",
-		},
-		Active:       true,
-		GroupMembers: []FKITUser{userA, userB, userB},
-	}, FKITGroup{
-		Email: "drawit19@chalmers.it",
-		SuperGroup: FKITSuperGroup{
-			Type:  "SOCIETY",
-			Email: "drawit@chalmers.it",
-		},
-		Active:       false,
-		GroupMembers: []FKITUser{userA, userB, userB},
-	}
-
-	want := []model.Group{{"drawit19@chalmers.it", "SOCIETY", []string{"usera@gmail.com", "userb@gmail.com"}, []string{}, false},
-		{"drawit20@chalmers.it", "SOCIETY", []string{"usera@gmail.com", "userb@gmail.com"}, []string{}, false},
-		{"drawit@chalmers.it", "SOCIETY", []string{"drawit20@chalmers.it"}, []string{}, false},
-		{"digit20@chalmers.it", "COMMITTEE", []string{"usera@chalmers.it", "userb@chalmers.it"}, []string{}, false},
-		{"digIT@chalmers.it", "COMMITTEE", []string{"digit20@chalmers.it"}, []string{}, false},
-		{"fkit@chalmers.it", "", []string{"drawit@chalmers.it", "digIT@chalmers.it"}, []string{}, false},
-		{"kit@chalmers.it", "", []string{"digIT@chalmers.it"}, []string{}, false}}
-
-	assert.Equal(t, getGroups([]FKITGroup{groupA, groupB, groupC}), want)
+	assert.Equal(t, want, getPostMails([]FKITGroup{groupA}))
 }

@@ -148,6 +148,7 @@ func (li *SuperGroupList) toGroups() (model.Group, model.Group, []model.Group) {
 	return fkit, kit, append(groups, superGroup)
 }
 
+//Creates a new post mail group
 func (pl *PostGroupList) newListItem(group *FKITGroup, member *FKITUser) *PostGroupList {
 	return &PostGroupList{
 		Next:        pl,
@@ -163,8 +164,9 @@ func (pl *PostGroupList) newListItem(group *FKITGroup, member *FKITUser) *PostGr
 	}
 }
 
+//Creates a post email for active member if their posts should have email
 func (pl *PostGroupList) insert(group *FKITGroup, member *FKITUser) *PostGroupList {
-	if !group.Active || !member.Gdpr || member.Post.EmailPrefix == "" {
+	if !group.Active || member.Post.EmailPrefix == "" || (!member.Gdpr && isKit(group)) {
 		return pl
 	}
 
@@ -182,6 +184,7 @@ func (pl *PostGroupList) insert(group *FKITGroup, member *FKITUser) *PostGroupLi
 	return pl
 }
 
+//Returns all post groups in kit and post groups which is not in kit
 func (pl *PostGroupList) toGroups() ([]model.Group, []model.Group) {
 	if pl.Next == nil {
 		return []model.Group{}, []model.Group{}

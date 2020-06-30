@@ -43,8 +43,17 @@ func getMemberEmail(group *FKITGroup, member *FKITUser) string {
 //Returns all the Email addresses from the member of a group
 func getMembers(group *FKITGroup) []string {
 	members := make(map[string]bool, len(group.GroupMembers))
-	for _, v := range group.GroupMembers {
-		members[getMemberEmail(group, &v)] = true
+
+	if !isKit(group) || !group.Active {
+		for _, member := range group.GroupMembers {
+			members[getMemberEmail(group, &member)] = true
+		}
+	} else {
+		for _, member := range group.GroupMembers {
+			if shouldHaveMail(group, &member) {
+				members[getMemberEmail(group, &member)] = true
+			}
+		}
 	}
 
 	membersMail := []string{}
@@ -65,6 +74,7 @@ func emptyGroup(emailPrefix string) model.Group {
 	}
 }
 
+//Makes a group which contains all the emails of groups with a specified prefix
 func groupOfGroups(mailPrefix string, requiredPrefix string, groups []model.Group) model.Group {
 	newGroup := emptyGroup(mailPrefix)
 	for _, group := range groups {
@@ -87,6 +97,7 @@ func getGroups(fkitGroups []FKITGroup) []model.Group {
 	return append(groups, fkit, kit)
 }
 
+//Creates all mail groups connected to posts
 func getPostMails(fkitGroups []FKITGroup) []model.Group {
 	groupList := &PostGroupList{}
 	for _, group := range fkitGroups {
