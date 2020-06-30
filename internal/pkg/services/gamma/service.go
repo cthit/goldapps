@@ -65,71 +65,6 @@ func emptyGroup(emailPrefix string) model.Group {
 	}
 }
 
-//Creates a map with of <post, <committee>, mailGroup> from all posts
-func createMailPostMap(posts []Post) map[string]map[string]model.Group {
-	mailPostMap := make(map[string]map[string]model.Group)
-	for _, post := range posts {
-		mailPostMap[post.EmailPrefix] = make(map[string]model.Group)
-		mailPostMap[post.EmailPrefix]["kommitteer"] = emptyGroup(post.EmailPrefix + ".kommitteer")
-	}
-	return mailPostMap
-}
-
-//Inserts a new member to the mail group
-func appendMember(mailPostMap *map[string]map[string]model.Group, post string, groupName string, member string) {
-	tmpGroup := (*mailPostMap)[post][groupName]
-	tmpGroup.Members = append(tmpGroup.Members, member)
-	(*mailPostMap)[post][groupName] = tmpGroup
-}
-
-//Populates the map of post-mail-groups with the members for each post
-func insertPostUsers(groups []FKITGroup, mailPostMap *map[string]map[string]model.Group) {
-	var prefix string
-	var groupName string
-	var mailPrefix string
-
-	for _, group := range groups {
-		for _, member := range group.GroupMembers {
-			prefix = member.Post.EmailPrefix
-			groupName = group.SuperGroup.Name
-
-			if prefix == "" {
-				continue
-			}
-
-			if _, ok := (*mailPostMap)[prefix][groupName]; !ok {
-				mailPrefix = fmt.Sprintf("%s.%s", prefix, groupName)
-				(*mailPostMap)[prefix][groupName] = emptyGroup(mailPrefix)
-
-				if isKit(&group) {
-					appendMember(mailPostMap, prefix, "kommitteer", mailPrefix+"@chalmers.it")
-				}
-			}
-
-			appendMember(mailPostMap, prefix, groupName, getMemberEmail(&group, &member))
-		}
-	}
-}
-
-//Converts the map of post-mail-groups to an array of post-mail-groups
-func convertPostMailGroups(mailPostMap *map[string]map[string]model.Group) []model.Group {
-	mailGroups := []model.Group{}
-	var postGroupMail model.Group
-
-	for postName, postMap := range *mailPostMap {
-		postGroupMail = emptyGroup(postName)
-		for _, group := range postMap {
-			mailGroups = append(mailGroups, group)
-			if !strings.Contains(group.Email, "kommitteer") {
-				postGroupMail.Members = append(postGroupMail.Members, group.Email)
-			}
-		}
-		mailGroups = append(mailGroups, postGroupMail)
-	}
-
-	return mailGroups
-}
-
 func groupOfGroups(mailPrefix string, requiredPrefix string, groups []model.Group) model.Group {
 	newGroup := emptyGroup(mailPrefix)
 	for _, group := range groups {
@@ -176,19 +111,11 @@ func (s GammaService) GetGroups() ([]model.Group, error) {
 		log.Println("Failed to fetch all groups from Gamma")
 		panic(err)
 	}
-	/*posts, err := getMailPosts(&s)
-	if err != nil {
-		log.Println("Failed to fetch all posts from Gamma")
-		panic(err)
-	}*/
 	activeGroups, err := getActiveGroups(&s)
 	if err != nil {
 		log.Println("Failed to fetch active groups")
 		panic(err)
 	}
-
-	/*mailPostMap := createMailPostMap(posts)
-	insertPostUsers(activeGroups, &mailPostMap)*/
 
 	formattedGroups := getGroups(groups)
 	formattedGroups = append(formattedGroups, getPostMails(activeGroups)...)
