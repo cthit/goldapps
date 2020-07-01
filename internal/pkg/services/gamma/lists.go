@@ -9,6 +9,7 @@ import (
 //Both SuperGroupList and NormalGroupList follows a linked list structure
 
 type SuperGroupList struct {
+	SuperGroupId string
 	Next         *SuperGroupList
 	MemberGroups *NormalGroupList
 	Kit          bool
@@ -16,8 +17,9 @@ type SuperGroupList struct {
 }
 
 type NormalGroupList struct {
-	Next   *NormalGroupList
-	Active bool
+	GroupId string
+	Next    *NormalGroupList
+	Active  bool
 	model.Group
 }
 
@@ -38,7 +40,7 @@ func (li *NormalGroupList) insert(group *FKITGroup) *NormalGroupList {
 
 	//If you have reached the correct group
 	//append the member emails
-	if group.Email == li.Email {
+	if group.ID == li.GroupId {
 		li.Members = append(li.Members, getMembers(group)...)
 		return li
 	}
@@ -50,8 +52,9 @@ func (li *NormalGroupList) insert(group *FKITGroup) *NormalGroupList {
 //Creates a group item which contains the group email, members and a pointer to the next item
 func (next *NormalGroupList) newListItem(group *FKITGroup) *NormalGroupList {
 	return &NormalGroupList{
-		Next:   next,
-		Active: group.Active || group.SuperGroup.Type == "ALUMNI",
+		GroupId: group.ID,
+		Next:    next,
+		Active:  group.Active || group.SuperGroup.Type == "ALUMNI",
 		Group: model.Group{
 			Email:      group.Email,
 			Type:       group.SuperGroup.Type,
@@ -108,6 +111,7 @@ func (li *SuperGroupList) insert(group *FKITGroup) *SuperGroupList {
 func (next *SuperGroupList) newListItem(group *FKITGroup) *SuperGroupList {
 	memberGroups := &NormalGroupList{}
 	return &SuperGroupList{
+		SuperGroupId: group.SuperGroup.ID,
 		Next:         next,
 		MemberGroups: memberGroups.insert(group),
 		Kit:          isKit(group),
@@ -161,7 +165,7 @@ func (pl *PostGroupList) newListItem(group *FKITGroup, member *FKITUser) *PostGr
 		GroupName:   group.SuperGroup.Name,
 		Kit:         isKit(group),
 		Group: model.Group{
-			Email:      fmt.Sprintf("%s.%s@chalmers.it", member.Post.EmailPrefix, group.SuperGroup.Name),
+			Email:      fmt.Sprintf("%s.%s", member.Post.EmailPrefix, group.SuperGroup.Email),
 			Members:    []string{getMemberEmail(group, member)},
 			Aliases:    nil,
 			Expendable: false,
