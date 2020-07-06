@@ -2,9 +2,15 @@ package cli
 
 import (
 	"fmt"
+
 	"github.com/cthit/goldapps/internal/pkg/actions"
 	"github.com/cthit/goldapps/internal/pkg/duplicates"
 	"github.com/cthit/goldapps/internal/pkg/model"
+)
+
+const (
+	colorRed   = "\033[31m"
+	colorGreen = "\033[32m"
 )
 
 func init() {
@@ -109,6 +115,52 @@ func Run() {
 	}
 }
 
+func has(member string, members []string) bool {
+	for _, v := range members {
+		if model.CompareEmails(v, member) {
+			return true
+		}
+	}
+	return false
+}
+
+func printGroupDiff(before model.Group, after model.Group) {
+	fmt.Printf("\tUpdate: ")
+	if before.Email != after.Email {
+		fmt.Printf("\t%s -> %s\n", before.Email, after.Email)
+	} else {
+		fmt.Printf("\t\t%s\n", after.Email)
+	}
+	if before.Type != after.Email {
+		fmt.Printf("\t\t\t%s -> %s\n", before.Type, after.Type)
+	}
+
+	added := []string{}
+	deleted := []string{}
+
+	for _, member := range before.Members {
+		if !has(member, after.Members) {
+			deleted = append(deleted, member)
+		}
+	}
+
+	for _, member := range after.Members {
+		if !has(member, before.Members) {
+			added = append(added, member)
+		}
+	}
+
+	for _, del := range deleted {
+		fmt.Printf("\t\t\t- %s\n", del)
+	}
+
+	for _, add := range added {
+		fmt.Printf("\t\t\t+ %s\n", add)
+	}
+
+	fmt.Printf("\t\t\tAliases: %v -> %v\n", before.Aliases, after.Aliases)
+}
+
 func getGroupChanges(proposedChanges actions.GroupActions) actions.GroupActions {
 	if !flags.interactive && flags.noInteraction {
 		fmt.Printf(
@@ -137,11 +189,7 @@ func getGroupChanges(proposedChanges actions.GroupActions) actions.GroupActions 
 		fmt.Printf("(Groups) Changes (%d):\n", len(proposedChanges.Updates))
 		if len(proposedChanges.Updates) > 0 {
 			for _, update := range proposedChanges.Updates {
-				fmt.Printf("\tUpdate:\n")
-				fmt.Printf("\t\tFrom:\n")
-				fmt.Printf("\t\t\t%v\n", update.Before)
-				fmt.Printf("\t\tTo:\n")
-				fmt.Printf("\t\t\t%v\n", update.After)
+				printGroupDiff(update.Before, update.After)
 			}
 			add := askBool(
 				fmt.Sprintf("(Groups) Do you want to commit those %d updates?", len(proposedChanges.Updates)),
