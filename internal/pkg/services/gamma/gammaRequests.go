@@ -46,7 +46,7 @@ func getGammaGroups(s *GammaService) ([]FKITGroup, error) {
 		Groups []FKITGroup `json:"groups"`
 	}
 
-	err := gammaReq(s, "/api/groups", &groups)
+	err := gammaReq(s, "/api/admin/groups", &groups)
 	if err != nil {
 		log.Println(err)
 		return nil, err
