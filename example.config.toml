@@ -6,9 +6,9 @@
     servicekeyfile = "gapps.json"
     adminaccount = "admin@mydomain.ex"
 
-[gamma.producer]
+[gamma.provider]
     apiKey = "key"
-    url = "http://localhost:8080"
+    url = "http://localhost:8081"
 
 [ldap]
 	url = "ldap.mydomain.ex:636"
