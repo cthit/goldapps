@@ -58,7 +58,7 @@ func getGammaGroups(s *GammaService) ([]FKITGroup, error) {
 //Fetches all active groups
 func getActiveGroups(s *GammaService) ([]FKITGroup, error) {
 	groups := struct {
-		GetFKITGroupResponse []FKITGroup `json:"getFKITGroupResponse"`
+		GetFKITGroupResponse []FKITGroup `json:"groups"`
 	}{}
 	err := gammaReq(s, "/api/admin/groups/active", &groups)
 	return groups.GetFKITGroupResponse, err
