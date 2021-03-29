@@ -175,7 +175,7 @@ func (pl *PostGroupList) newListItem(group *FKITGroup, member *FKITUser) *PostGr
 
 //Creates a post email for active member if their posts should have email
 func (pl *PostGroupList) insert(group *FKITGroup, member *FKITUser) *PostGroupList {
-	if !group.Active || member.Post.EmailPrefix == "" || (!member.Gdpr && isKit(group)) {
+	if !group.Active || member.Post.EmailPrefix == "" || (!member.Gdpr && isKit(group)) || group.SuperGroup.Type == "ALUMNI" {
 		return pl
 	}
 
