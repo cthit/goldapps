@@ -125,7 +125,7 @@ func has(member string, members []string) bool {
 }
 
 func printGroupDiff(before model.Group, after model.Group) {
-	fmt.Printf("\tUpdate: ")
+	fmt.Printf("\n\tUpdate: ")
 	if before.Email != after.Email {
 		fmt.Printf("\t%s -> %s\n", before.Email, after.Email)
 	} else {
