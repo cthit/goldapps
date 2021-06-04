@@ -55,42 +55,11 @@ func getGammaGroups(s *GammaService) ([]FKITGroup, error) {
 	return groups.Groups, nil
 }
 
-//Fetches all super groups from Gamma
-func getSuperGroups(s *GammaService) ([]FKITSuperGroup, error) {
-	var superGroups []FKITSuperGroup
-
-	err := gammaReq(s, "/api/superGroups", &superGroups)
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-
-	return superGroups, nil
-}
-
-//Fetches all posts which has a mail prefix
-func getMailPosts(s *GammaService) ([]Post, error) {
-	posts := []Post{}
-	err := gammaReq(s, "/api/groups/posts", &posts)
-	if err != nil {
-		return nil, err
-	}
-
-	mailPosts := []Post{}
-	for _, post := range posts {
-		if post.EmailPrefix != "" {
-			mailPosts = append(mailPosts, post)
-		}
-	}
-
-	return mailPosts, nil
-}
-
 //Fetches all active groups
 func getActiveGroups(s *GammaService) ([]FKITGroup, error) {
 	groups := struct {
-		GetFKITGroupResponse []FKITGroup `json:"getFKITGroupResponse"`
+		GetFKITGroupResponse []FKITGroup `json:"groups"`
 	}{}
-	err := gammaReq(s, "/api/groups/active", &groups)
+	err := gammaReq(s, "/api/admin/groups/active", &groups)
 	return groups.GetFKITGroupResponse, err
 }
