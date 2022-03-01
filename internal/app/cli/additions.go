@@ -90,7 +90,7 @@ func mergeAdditionGroups(additionGroups model.Groups, providerGroups model.Group
 						}
 					}
 					if !memberFound {
-						providerGroups[i].Members = append(pgroup.Members, member)
+						providerGroups[i].Members = append(providerGroups[i].Members, member)
 					}
 				}
 			}
