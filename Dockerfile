@@ -23,10 +23,6 @@ RUN mkdir /app && mv $GOPATH/bin/goldapps /app/goldapps
 #    PRODUCTION STAGE    #
 ##########################
 FROM alpine
-MAINTAINER digIT <digit@chalmers.it>
-
-# Add standard certificates
-RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
 
 # Set user
 RUN addgroup -S app
