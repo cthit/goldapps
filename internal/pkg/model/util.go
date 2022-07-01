@@ -15,6 +15,7 @@ func SanitizeEmail(s string) string {
 	s = strings.TrimSpace(s)
 	s = strings.ToLower(s)
 	replacelist := map[string]string{
+		"φ": "fi",
 		"π": "pi",
 		"å": "a",
 		"ä": "a",
