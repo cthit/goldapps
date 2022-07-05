@@ -17,5 +17,6 @@ func Run() {
 	}
 
 	r.GET("/suggestions", getSuggestions)
+	r.POST("/commit", executeChanges)
 	r.Run()
 }

@@ -1,11 +1,20 @@
 package web
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
+	"github.com/cthit/goldapps/internal/pkg/actions"
 	"github.com/gin-gonic/gin"
 )
+
+type ChangeBody struct {
+	UserChanges  actions.UserActions  `json:"userChanges"`
+	GroupChanges actions.GroupActions `json:"groupChanges"`
+}
 
 func getSuggestions(c *gin.Context) {
 	user, group, err := getChangeSuggestions("", "gapps.json")
@@ -16,8 +25,29 @@ func getSuggestions(c *gin.Context) {
 	} else {
 		code = http.StatusOK
 	}
-	c.JSON(code, gin.H{
-		"userChanges":  user,
-		"groupChanges": group,
-	})
+	response := ChangeBody{user, group}
+	c.JSON(code, response)
+}
+
+func executeChanges(c *gin.Context) {
+	body, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		fmt.Println(err)
+		c.AbortWithStatus(http.StatusBadRequest)
+	}
+
+	changes := ChangeBody{}
+	err = json.Unmarshal(body, &changes)
+	if err != nil {
+		fmt.Println(err)
+		c.AbortWithStatus(http.StatusBadRequest)
+	}
+
+	ok := commitChanges(changes.UserChanges, changes.GroupChanges, "gapps.json")
+	if !ok {
+		fmt.Println("Failed to execute all changes without errors")
+		c.AbortWithError(http.StatusBadRequest, errors.New("Failed to execute all changes without errors"))
+	}
+	c.Status(http.StatusCreated)
+	c.Done()
 }

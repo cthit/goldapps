@@ -118,3 +118,32 @@ func getChangeSuggestions(fromJson string, toJson string) (actions.UserActions, 
 
 	return proposedUserChanges, proposedGroupChanges, nil
 }
+
+func commitChanges(userChanges actions.UserActions, groupChanges actions.GroupActions, toJson string) bool {
+	fmt.Println("Setting up services")
+	consumer, err := getConsumer(toJson)
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+
+	// Commit changes
+	userErrors := userChanges.Commit(consumer)
+	groupErrors := groupChanges.Commit(consumer)
+
+	// Print result
+	if groupErrors.Amount() == 0 {
+		fmt.Println("All groups actions performed!")
+	} else {
+		fmt.Printf("%d out of %d group actions performed\n", groupChanges.Amount()-groupErrors.Amount(), groupChanges.Amount())
+		fmt.Print(groupErrors.String())
+	}
+	if userErrors.Amount() == 0 {
+		fmt.Println("All users actions performed!")
+	} else {
+		fmt.Printf("%d out of %d group actions performed\n", userChanges.Amount()-userErrors.Amount(), groupChanges.Amount())
+		fmt.Print(userErrors.String())
+	}
+
+	return userErrors.Amount() == 0 && groupChanges.Amount() == 0
+}

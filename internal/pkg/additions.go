@@ -28,35 +28,14 @@ func AddAdditions(providerGroups model.Groups, providerUsers model.Users, from s
 }
 
 func GetAdditions(from string) ([]model.User, []model.Group) {
-
-	/*var from string
-	if flags.interactive {
-		from = askString("Which file would you like to use for additions?, Just press enter to skip", "")
-	} else {
-		from = flags.additions
-	}*/
-
 	if from == "" {
 		return nil, nil
 	}
 
 	isJson, _ := regexp.MatchString(`.+\.json$`, from)
 	if !isJson {
-
 		return nil, nil
-
 	}
-	/*
-		else {
-			fmt.Println("You must specify a valid json file")
-			previous := flags.interactive
-			flags.interactive = true
-			defer func() {
-				flags.interactive = previous
-			}()
-			return GetAdditions()
-		}
-	*/
 
 	provider, _ := json.NewJsonService(from)
 	groups, err := provider.GetGroups()
