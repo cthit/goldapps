@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func loadConfig() error {
+func LoadConfig() error {
 
 	viper.SetConfigName("config")                   // name of config file (without extension)
 	viper.AddConfigPath("/etc/google-ldap-sync/")   // path to look for the config file in

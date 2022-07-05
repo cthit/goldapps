@@ -3,15 +3,16 @@ package actions
 import (
 	"bytes"
 	"fmt"
+
 	"github.com/cthit/goldapps/internal/pkg/model"
 	"github.com/cthit/goldapps/internal/pkg/services"
 )
 
 // Set of action to be performed on a set of users
 type UserActions struct {
-	Updates   []model.UserUpdate
-	Additions []model.User
-	Deletions []model.User
+	Updates   []model.UserUpdate `json:"userUpdates"`
+	Additions []model.User       `json:"additions"`
+	Deletions []model.User       `json:"deletions"`
 }
 
 func (actions UserActions) Amount() int {

@@ -1,15 +1,16 @@
-package cli
+package pkg
 
 import (
 	"fmt"
+	"regexp"
+
 	"github.com/cthit/goldapps/internal/pkg/model"
 	"github.com/cthit/goldapps/internal/pkg/services/json"
-	"regexp"
 )
 
-func addAdditions(providerGroups model.Groups, providerUsers model.Users) (model.Groups, model.Users) {
+func AddAdditions(providerGroups model.Groups, providerUsers model.Users, from string) (model.Groups, model.Users) {
 	fmt.Println("Collecting additions")
-	additionUsers, additionGroups := getAdditions()
+	additionUsers, additionGroups := GetAdditions(from)
 	if additionUsers != nil && additionGroups != nil {
 		fmt.Printf("%d usersAdditions and %d groupAdditions collected.\n", len(additionUsers), len(additionGroups))
 
@@ -26,40 +27,47 @@ func addAdditions(providerGroups model.Groups, providerUsers model.Users) (model
 	return providerGroups, providerUsers
 }
 
-func getAdditions() ([]model.User, []model.Group) {
+func GetAdditions(from string) ([]model.User, []model.Group) {
 
-	var from string
+	/*var from string
 	if flags.interactive {
 		from = askString("Which file would you like to use for additions?, Just press enter to skip", "")
 	} else {
 		from = flags.additions
-	}
+	}*/
 
 	if from == "" {
 		return nil, nil
 	}
 
 	isJson, _ := regexp.MatchString(`.+\.json$`, from)
-	if isJson {
-		provider, _ := json.NewJsonService(from)
-		groups, err := provider.GetGroups()
-		if err != nil {
-			panic(err)
-		}
-		users, err := provider.GetUsers()
-		if err != nil {
-			panic(err)
-		}
-		return users, groups
-	} else {
-		fmt.Println("You must specify a valid json file")
-		previous := flags.interactive
-		flags.interactive = true
-		defer func() {
-			flags.interactive = previous
-		}()
-		return getAdditions()
+	if !isJson {
+
+		return nil, nil
+
 	}
+	/*
+		else {
+			fmt.Println("You must specify a valid json file")
+			previous := flags.interactive
+			flags.interactive = true
+			defer func() {
+				flags.interactive = previous
+			}()
+			return GetAdditions()
+		}
+	*/
+
+	provider, _ := json.NewJsonService(from)
+	groups, err := provider.GetGroups()
+	if err != nil {
+		panic(err)
+	}
+	users, err := provider.GetUsers()
+	if err != nil {
+		panic(err)
+	}
+	return users, groups
 }
 
 func mergeAdditionGroups(additionGroups model.Groups, providerGroups model.Groups) model.Groups {

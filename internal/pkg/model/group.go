@@ -17,8 +17,8 @@ type Groups []Group
 // Data struct representing how a group looks not and how it should look after an update
 // Allows for efficient updates as application doesn't have to re-upload whole group
 type GroupUpdate struct {
-	Before Group
-	After  Group
+	Before Group `json:"before"`
+	After  Group `json:"after"`
 }
 
 // Search for groupname(email) in list of groups

@@ -9,6 +9,7 @@ services:
 
   gamma-frontend:
     image: cthit/gamma-frontend:development
+    network_mode: host
     ports:
       - 3000:3000
 
