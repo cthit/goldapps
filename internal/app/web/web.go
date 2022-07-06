@@ -16,7 +16,7 @@ func Run() {
 		return
 	}
 
-	r.GET("/suggestions", getSuggestions)
-	r.POST("/commit", executeChanges)
+	r.GET("/api/suggestions", getSuggestions)
+	r.POST("/api/commit", executeChanges)
 	r.Run()
 }
