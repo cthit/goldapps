@@ -24,6 +24,7 @@ func gammaReq(s *GammaService, endpoint string, response interface{}) error {
 		log.Println(err)
 		return err
 	}
+	fmt.Printf("Gamma request sent to: %s [key: %s] status %d\n", endpoint, s.apiKey, resp.StatusCode)
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -46,7 +47,7 @@ func getGammaGroups(s *GammaService) ([]FKITGroup, error) {
 		Groups []FKITGroup `json:"groups"`
 	}
 
-	err := gammaReq(s, "/api/groups", &groups)
+	err := gammaReq(s, "/api/admin/groups", &groups)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -60,6 +61,6 @@ func getActiveGroups(s *GammaService) ([]FKITGroup, error) {
 	groups := struct {
 		GetFKITGroupResponse []FKITGroup `json:"groups"`
 	}{}
-	err := gammaReq(s, "/api/groups/active", &groups)
+	err := gammaReq(s, "/api/admin/groups/active", &groups)
 	return groups.GetFKITGroupResponse, err
 }

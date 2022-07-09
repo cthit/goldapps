@@ -1,0 +1,18 @@
+.mono-bold {
+    font-weight: bold;
+    font-family: "Courier";
+}
+
+.mono {
+    font-family: "Courier";
+}
+
+.added {
+    background-color: #00B74A;
+    border-radius: 8px;
+}
+
+.removed {
+    background-color: #EF5350;
+    border-radius: 8px;
+}

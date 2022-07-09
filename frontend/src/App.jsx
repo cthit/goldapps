@@ -1,11 +1,11 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { UpdateWizard } from "./use-cases";
+import { Update } from "./use-cases";
 
 const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<UpdateWizard />} />
+        <Route path="/" element={<Update />} />
       </Routes>
     </BrowserRouter>
   );

@@ -14,7 +14,9 @@ services:
       - 3000:3000
 
   gamma-backend:
-    image: cthit/gamma-backend:development
+    # Starta med cthit/gamma-backend:development för att få in mock data
+    # Byt sedan till cthit/gamma-backend för att få rätt APIer
+    image: cthit/gamma-backend
     environment:
       # Default admin user name = admin
       # Default admin password  = password

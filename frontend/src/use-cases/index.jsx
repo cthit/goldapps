@@ -1,3 +1,3 @@
-import UpdateWizard from "./update-wizard/UpdateWizard";
+import Update from "./update/Update";
 
-export { UpdateWizard };
+export { Update };
