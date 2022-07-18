@@ -145,5 +145,5 @@ func commitChanges(userChanges actions.UserActions, groupChanges actions.GroupAc
 		fmt.Print(userErrors.String())
 	}
 
-	return userErrors.Amount() == 0 && groupChanges.Amount() == 0
+	return userErrors.Amount() == 0 && groupErrors.Amount() == 0
 }

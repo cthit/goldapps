@@ -5,7 +5,7 @@ import { getId } from "../../../utils/utils";
 const GroupAddition = ({ addition, selected, onChange }) => (
   <>
     <TableRow>
-      <TableCell>
+      <TableCell padding="checkbox">
         <Checkbox
           checked={selected.includes(addition.id)}
           onChange={() => onChange(addition.id)}

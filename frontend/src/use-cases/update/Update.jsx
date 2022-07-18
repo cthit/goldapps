@@ -65,6 +65,23 @@ const getAllIds = data => {
   return ids;
 };
 
+const filterData = (data, selected) => {
+  for (const change in data) {
+    for (const type in data[change]) {
+      if (data[change][type] === null) {
+        continue;
+      }
+      data[change][type] = data[change][type].filter(e =>
+        selected.includes(e.id),
+      );
+      if (data[change][type].length === 0) {
+        delete data[change][type];
+      }
+    }
+  }
+  return data;
+};
+
 const Update = () => {
   const [selected, setSelected] = useState([]);
   const [allSelected, setAllSelected] = useState(true);
@@ -112,6 +129,25 @@ const Update = () => {
       setSelected([...selected, id]);
       setAllSelected(selected.length === numEntries - 1);
     }
+  };
+
+  const onCommit = () => {
+    const selectedData = filterData(JSON.parse(JSON.stringify(data)), selected);
+    const allIds = getAllIds(data);
+    const unselectedData = filterData(
+      JSON.parse(JSON.stringify(data)),
+      allIds.filter(id => !selected.includes(id)),
+    );
+
+    Axios.post("/api/commit", selectedData)
+      .then(res => {
+        setData(unselectedData);
+        setSelected([]);
+        setAllSelected(false);
+      })
+      .catch(err => {
+        console.log(err);
+      });
   };
 
   return (
@@ -192,7 +228,11 @@ const Update = () => {
           </TableBody>
         </TableContainer>
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <Button sx={{ marginTop: "2rem" }} variant="outlined">
+          <Button
+            sx={{ marginTop: "2rem" }}
+            variant="outlined"
+            onClick={onCommit}
+          >
             Commit
           </Button>
         </div>

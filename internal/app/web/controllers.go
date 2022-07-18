@@ -34,6 +34,7 @@ func executeChanges(c *gin.Context) {
 	if err != nil {
 		fmt.Println(err)
 		c.AbortWithStatus(http.StatusBadRequest)
+		return
 	}
 
 	changes := ChangeBody{}
@@ -41,12 +42,14 @@ func executeChanges(c *gin.Context) {
 	if err != nil {
 		fmt.Println(err)
 		c.AbortWithStatus(http.StatusBadRequest)
+		return
 	}
 
 	ok := commitChanges(changes.UserChanges, changes.GroupChanges, "gapps.json")
 	if !ok {
 		fmt.Println("Failed to execute all changes without errors")
 		c.AbortWithError(http.StatusBadRequest, errors.New("Failed to execute all changes without errors"))
+		return
 	}
 	c.Status(http.StatusCreated)
 	c.Done()

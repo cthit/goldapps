@@ -10,12 +10,12 @@ const getDiff = (oldArr, newArr) => {
   }
   for (let i of oldArr) {
     if (!newArr.includes(i)) {
-      res.push(<div className="mono removed">- {i}</div>);
+      res.push(<div className="mono-bold removed">- {i}</div>);
     }
   }
   for (let i of newArr) {
     if (!oldArr.includes(i)) {
-      res.push(<div className="mono added">+ {i}</div>);
+      res.push(<div className="mono-bold added">+ {i}</div>);
     }
   }
   return res;
