@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  Checkbox,
   Paper,
   TableBody,
   TableCell,
@@ -19,8 +20,55 @@ import {
   GroupAddition,
   GroupDeletion,
 } from "./elements";
+import { getId } from "../../utils/utils";
+
+const formatEntry = entry => {
+  let keys = Object.keys(entry);
+  if (keys.includes("cid")) {
+    return { ...entry, id: entry.cid };
+  }
+  if (keys.includes("members")) {
+    return { ...entry, id: getId(entry.email) };
+  }
+  keys = Object.keys(entry.before);
+  if (keys.includes("cid")) {
+    return { ...entry, id: entry.before.cid };
+  }
+  if (keys.includes("members")) {
+    return { ...entry, id: getId(entry.before.email) };
+  }
+  return entry;
+};
+
+const formatData = data => {
+  const ids = [];
+  for (const change in data) {
+    for (const type in data[change]) {
+      for (const i in data[change][type]) {
+        data[change][type][i] = formatEntry(data[change][type][i]);
+        ids.push(data[change][type][i].id);
+      }
+    }
+  }
+  return [data, ids];
+};
+
+const getAllIds = data => {
+  const ids = [];
+  for (const change in data) {
+    for (const type in data[change]) {
+      for (const i in data[change][type]) {
+        ids.push(data[change][type][i].id);
+      }
+    }
+  }
+  return ids;
+};
 
 const Update = () => {
+  const [selected, setSelected] = useState([]);
+  const [allSelected, setAllSelected] = useState(true);
+  const [numEntries, setNumEntries] = useState(0);
   const [data, setData] = useState({
     userChanges: {
       userDeletions: null,
@@ -36,9 +84,35 @@ const Update = () => {
 
   useEffect(() => {
     Axios.get("/api/suggestions")
-      .then(res => setData(res.data))
+      .then(res => {
+        const [data, ids] = formatData(res.data);
+        setData(data);
+        setSelected(ids);
+        setAllSelected(true);
+        setNumEntries(ids.length);
+      })
       .catch(err => console.log(err));
   }, []);
+
+  const onCheckAll = () => {
+    if (allSelected) {
+      setAllSelected(false);
+      setSelected([]);
+    } else {
+      setAllSelected(true);
+      setSelected(getAllIds(data));
+    }
+  };
+
+  const onCheck = id => {
+    if (selected.includes(id)) {
+      setSelected(selected.filter(e => e !== id));
+      setAllSelected(false);
+    } else {
+      setSelected([...selected, id]);
+      setAllSelected(selected.length === numEntries - 1);
+    }
+  };
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -46,6 +120,9 @@ const Update = () => {
         <TableContainer component={Paper}>
           <TableHead>
             <TableRow>
+              <TableCell padding="checkbox">
+                <Checkbox checked={allSelected} onChange={onCheckAll} />
+              </TableCell>
               <TableCell>Id</TableCell>
               <TableCell>Name</TableCell>
               <TableCell>E-mail(s)</TableCell>
@@ -54,32 +131,62 @@ const Update = () => {
           <TableBody>
             {data.userChanges.userUpdates
               ? data.userChanges.userUpdates.map(e => (
-                  <UserUpdate key={e.before.cid} change={e} />
+                  <UserUpdate
+                    key={e.id}
+                    change={e}
+                    selected={selected}
+                    onChange={onCheck}
+                  />
                 ))
               : null}
             {data.userChanges.additions
               ? data.userChanges.additions.map(e => (
-                  <UserAddition addition={e} />
+                  <UserAddition
+                    key={e.id}
+                    addition={e}
+                    selected={selected}
+                    onChange={onCheck}
+                  />
                 ))
               : null}
             {data.userChanges.deletions
               ? data.userChanges.deletions.map(e => (
-                  <UserDeletion deletion={e} />
+                  <UserDeletion
+                    key={e.id}
+                    deletion={e}
+                    selected={selected}
+                    onChange={onCheck}
+                  />
                 ))
               : null}
             {data.groupChanges.groupUpdates
               ? data.groupChanges.groupUpdates.map(e => (
-                  <GroupUpdate change={e} />
+                  <GroupUpdate
+                    key={e.id}
+                    change={e}
+                    selected={selected}
+                    onChange={onCheck}
+                  />
                 ))
               : null}
             {data.groupChanges.additions
               ? data.groupChanges.additions.map(e => (
-                  <GroupAddition addition={e} />
+                  <GroupAddition
+                    key={e.id}
+                    addition={e}
+                    selected={selected}
+                    onChange={onCheck}
+                  />
                 ))
               : null}
             {data.groupChanges.deletions
               ? data.groupChanges.deletions.map(e => (
-                  <GroupDeletion deletion={e} />
+                  <GroupDeletion
+                    key={e.id}
+                    deletion={e}
+                    selected={selected}
+                    onChange={onCheck}
+                  />
                 ))
               : null}
           </TableBody>

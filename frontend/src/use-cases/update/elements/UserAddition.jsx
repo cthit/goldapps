@@ -1,9 +1,15 @@
-import { TableCell, TableRow } from "@mui/material";
+import { Checkbox, TableCell, TableRow } from "@mui/material";
 
 //id [cid], name [first_name 'nick' second_name], email [email]
-const UserAddition = ({ addition }) => (
+const UserAddition = ({ addition, selected, onChange }) => (
   <>
     <TableRow>
+      <TableCell padding="checkbox">
+        <Checkbox
+          checked={selected.includes(addition.id)}
+          onChange={() => onChange(addition.id)}
+        />
+      </TableCell>
       <TableCell>
         <div className="mono-bold added">+ {addition.cid}</div>
       </TableCell>

@@ -1,9 +1,15 @@
-import { TableCell, TableRow } from "@mui/material";
+import { Checkbox, TableCell, TableRow } from "@mui/material";
 
 //id [cid], name [first_name 'nick' second_name], email [email]
-const UserUpdate = ({ change }) => (
+const UserUpdate = ({ change, selected, onChange }) => (
   <>
     <TableRow>
+      <TableCell padding="checkbox">
+        <Checkbox
+          checked={selected.includes(change.id)}
+          onChange={() => onChange(change.id)}
+        />
+      </TableCell>
       <TableCell>{change.before.cid}</TableCell>
       <TableCell>
         {change.before.first_name !== change.after.first_name ||

@@ -1,4 +1,4 @@
-import { TableCell, TableRow } from "@mui/material";
+import { Checkbox, TableCell, TableRow } from "@mui/material";
 import { getId } from "../../../utils/utils";
 
 const getDiff = (oldArr, newArr) => {
@@ -22,9 +22,15 @@ const getDiff = (oldArr, newArr) => {
 };
 
 //id [<name before @chalmers.it>], name [email], email [member emails]
-const GroupUpdate = ({ change }) => (
+const GroupUpdate = ({ change, selected, onChange }) => (
   <>
     <TableRow>
+      <TableCell padding="checkbox">
+        <Checkbox
+          checked={selected.includes(change.id)}
+          onChange={() => onChange(change.id)}
+        />
+      </TableCell>
       <TableCell>{getId(change.before.email)}</TableCell>
       <TableCell>{change.before.email}</TableCell>
       <TableCell>
