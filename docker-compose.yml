@@ -9,7 +9,8 @@ services:
 
   gamma-frontend:
     image: cthit/gamma-frontend:development
-    network_mode: host
+    environment:
+      HTTP_PROXY: http://gamma-backend:8081
     ports:
       - 3000:3000
 
