@@ -19,9 +19,12 @@ const GroupAddition = ({ addition, selected, onChange }) => (
       </TableCell>
       <TableCell>
         {addition.members.map(m => (
-          <div className="mono-bold added">+ {m}</div>
+          <div key={m} className="mono-bold added">
+            + {m}
+          </div>
         ))}
       </TableCell>
+      <TableCell>Group Addition</TableCell>
     </TableRow>
   </>
 );

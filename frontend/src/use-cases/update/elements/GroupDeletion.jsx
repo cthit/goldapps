@@ -19,9 +19,12 @@ const GroupDeletion = ({ deletion, selected, onChange }) => (
       </TableCell>
       <TableCell>
         {deletion.members.map(m => (
-          <div className="mono-bold removed">- {m}</div>
+          <div key={m} className="mono-bold removed">
+            - {m}
+          </div>
         ))}
       </TableCell>
+      <TableCell>Group Deletion</TableCell>
     </TableRow>
   </>
 );

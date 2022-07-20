@@ -42,6 +42,7 @@ const UserUpdate = ({ change, selected, onChange }) => (
           <>{change.before.mail}</>
         )}
       </TableCell>
+      <TableCell>User Update</TableCell>
     </TableRow>
   </>
 );

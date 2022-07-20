@@ -36,6 +36,7 @@ const GroupUpdate = ({ change, selected, onChange }) => (
       <TableCell>
         {getDiff(change.before.members, change.after.members)}
       </TableCell>
+      <TableCell>Group Update</TableCell>
     </TableRow>
   </>
 );

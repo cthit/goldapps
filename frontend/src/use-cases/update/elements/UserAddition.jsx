@@ -21,6 +21,7 @@ const UserAddition = ({ addition, selected, onChange }) => (
       <TableCell>
         <div className="mono-bold added">+ {addition.mail}</div>
       </TableCell>
+      <TableCell>User Addition</TableCell>
     </TableRow>
   </>
 );

@@ -1,13 +1,19 @@
 import {
   Box,
   Button,
+  ButtonGroup,
   Checkbox,
+  FormControlLabel,
   Paper,
+  Radio,
+  RadioGroup,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
+  Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import Axios from "axios";
@@ -86,6 +92,11 @@ const Update = () => {
   const [selected, setSelected] = useState([]);
   const [allSelected, setAllSelected] = useState(true);
   const [numEntries, setNumEntries] = useState(0);
+  const [provider, setProvider] = useState("gamma");
+  const [providerFile, setProviderFile] = useState("");
+  const [consumer, setConsumer] = useState("json");
+  const [consumerFile, setConsumerFile] = useState("data.json");
+
   const [data, setData] = useState({
     userChanges: {
       userDeletions: null,
@@ -152,6 +163,71 @@ const Update = () => {
 
   return (
     <Box sx={{ width: "100%" }}>
+      <Box sx={{ paddingTop: "2rem", paddingLeft: "2rem" }}>
+        <ButtonGroup>
+          <Typography sx={{ paddingTop: "1rem", paddingRight: "1rem" }}>
+            From:
+          </Typography>
+          <RadioGroup
+            sx={{ display: "flex", flexDirection: "row" }}
+            defaultValue="gamma"
+            onChange={e => setProvider(e.target.value)}
+            value={provider}
+            aria-labelledby="provider-radio-button"
+            name="provider-radio-button"
+          >
+            <FormControlLabel
+              value="gapps"
+              control={<Radio />}
+              label="G-suit"
+            />
+            <FormControlLabel value="gamma" control={<Radio />} label="Gamma" />
+            <FormControlLabel value="ldap" control={<Radio />} label="LDAP" />
+            <FormControlLabel value="json" control={<Radio />} label=".json" />
+            <TextField
+              variant="standard"
+              value={providerFile}
+              onChange={e => setProviderFile(e.target.value)}
+              disabled={provider !== "json"}
+            />
+          </RadioGroup>
+        </ButtonGroup>
+        <ButtonGroup sx={{ paddingTop: "1rem" }}>
+          <Typography sx={{ paddingTop: "1rem", paddingRight: "2.2rem" }}>
+            To:
+          </Typography>
+          <RadioGroup
+            sx={{ display: "flex", flexDirection: "row" }}
+            defaultValue="json"
+            onChange={e => setConsumer(e.target.value)}
+            value={consumer}
+            aria-labelledby="consumer-radio-button"
+            name="consumer-radio-button"
+          >
+            <FormControlLabel
+              value="gapps"
+              control={<Radio />}
+              label="G-suit"
+            />
+
+            <FormControlLabel value="json" control={<Radio />} label=".json" />
+            <TextField
+              variant="standard"
+              value={consumerFile}
+              onChange={e => setConsumerFile(e.target.value)}
+              disabled={consumer !== "json"}
+            />
+          </RadioGroup>
+        </ButtonGroup>
+        <div>
+          <Button
+            sx={{ marginTop: "1rem", textTransform: "none" }}
+            variant="contained"
+          >
+            Collect suggestions
+          </Button>
+        </div>
+      </Box>
       <Box sx={{ padding: "2rem" }}>
         <TableContainer component={Paper}>
           <TableHead>
@@ -162,6 +238,7 @@ const Update = () => {
               <TableCell>Id</TableCell>
               <TableCell>Name</TableCell>
               <TableCell>E-mail(s)</TableCell>
+              <TableCell>Type</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

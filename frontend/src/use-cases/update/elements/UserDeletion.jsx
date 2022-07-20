@@ -21,6 +21,7 @@ const UserDeletion = ({ deletion, selected, onChange }) => (
       <TableCell>
         <div className="mono-bold removed">- {deletion.mail}</div>
       </TableCell>
+      <TableCell>User Deletion</TableCell>
     </TableRow>
   </>
 );
