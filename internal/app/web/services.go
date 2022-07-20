@@ -1,6 +1,7 @@
 package web
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 
@@ -20,13 +21,16 @@ func getConsumer(toJson string) (services.UpdateService, error) {
 	var err error
 
 	isJson, _ := regexp.MatchString(`.+\.json$`, toJson)
-	if !isJson {
+	if toJson == "gapps" {
 		consumer, err = admin.NewGoogleService(
 			viper.GetString("gapps.consumer.servicekeyfile"),
 			viper.GetString("gapps.consumer.adminaccount"))
 		return consumer, nil
-	} else {
+	} else if isJson {
 		consumer, err = json.NewJsonService(toJson)
+	} else {
+		fmt.Printf("Consumer '%s' was not found\n", toJson)
+		return nil, errors.New("Consumer not found")
 	}
 	if err != nil {
 		fmt.Println("Failed to get consumer")
@@ -40,12 +44,15 @@ func getProvider(fromJson string) (services.CollectionService, error) {
 	var err error
 
 	isJson, _ := regexp.MatchString(`.+\.json$`, fromJson)
-	if !isJson {
+	if fromJson == "gamma" {
 		provider, err = gamma.CreateGammaService(
 			viper.GetString("gamma.provider.apiKey"),
 			viper.GetString("gamma.provider.url"))
-	} else {
+	} else if isJson {
 		provider, err = json.NewJsonService(fromJson)
+	} else {
+		fmt.Printf("Provider '%s' was not found\n", fromJson)
+		return nil, errors.New("Provider not found")
 	}
 	if err != nil {
 		fmt.Println("Failed to get provider")

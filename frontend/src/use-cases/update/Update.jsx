@@ -20,7 +20,7 @@ import {
   Typography,
 } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Axios from "axios";
 import "./Update.css";
 import {
@@ -126,8 +126,13 @@ const Update = () => {
     },
   });
 
-  useEffect(() => {
-    Axios.get("/api/suggestions")
+  const fetchData = () => {
+    Axios.get("/api/suggestions", {
+      params: {
+        from: provider === "json" ? providerFile : provider,
+        to: consumer === "json" ? consumerFile : consumer,
+      },
+    })
       .then(res => {
         const [data, ids] = formatData(res.data);
         setData(data);
@@ -136,7 +141,7 @@ const Update = () => {
         setNumEntries(ids.length);
       })
       .catch(err => console.log(err));
-  }, []);
+  };
 
   const onCheckAll = () => {
     if (allSelected) {
@@ -174,7 +179,11 @@ const Update = () => {
       allIds.filter(id => !selected.includes(id)),
     );
 
-    Axios.post("/api/commit", selectedData)
+    Axios.post("/api/commit", selectedData, {
+      params: {
+        to: consumer === "json" ? consumerFile : consumer,
+      },
+    })
       .then(res => {
         setData(unselectedData);
         setSelected([]);
@@ -187,7 +196,14 @@ const Update = () => {
 
   return (
     <Box sx={{ width: "100%" }}>
-      <Box sx={{ paddingTop: "2rem", paddingLeft: "2rem" }}>
+      <Box
+        sx={{
+          paddingTop: "2rem",
+          paddingLeft: "2rem",
+          flexDirection: "column",
+          display: "flex",
+        }}
+      >
         <ButtonGroup>
           <Typography sx={{ paddingTop: "1rem", paddingRight: "1rem" }}>
             From:
@@ -200,13 +216,7 @@ const Update = () => {
             aria-labelledby="provider-radio-button"
             name="provider-radio-button"
           >
-            <FormControlLabel
-              value="gapps"
-              control={<Radio />}
-              label="G-suit"
-            />
             <FormControlLabel value="gamma" control={<Radio />} label="Gamma" />
-            <FormControlLabel value="ldap" control={<Radio />} label="LDAP" />
             <FormControlLabel value="json" control={<Radio />} label=".json" />
             <TextField
               variant="standard"
@@ -247,6 +257,7 @@ const Update = () => {
           <Button
             sx={{ marginTop: "1rem", textTransform: "none" }}
             variant="contained"
+            onClick={() => fetchData()}
           >
             Collect suggestions
           </Button>

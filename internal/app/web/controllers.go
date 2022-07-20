@@ -17,7 +17,20 @@ type ChangeBody struct {
 }
 
 func getSuggestions(c *gin.Context) {
-	user, group, err := getChangeSuggestions("", "gapps.json")
+	from, ok := c.GetQuery("from")
+	if !ok {
+		fmt.Println("Parameter 'from' was not provided")
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+	to, ok := c.GetQuery("to")
+	if !ok {
+		fmt.Println("Parameter 'to' was not provided")
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	user, group, err := getChangeSuggestions(from, to)
 	var code int
 	if err != nil {
 		code = http.StatusBadRequest
@@ -45,7 +58,14 @@ func executeChanges(c *gin.Context) {
 		return
 	}
 
-	ok := commitChanges(changes.UserChanges, changes.GroupChanges, "gapps.json")
+	to, ok := c.GetQuery("to")
+	if !ok {
+		fmt.Println("Parameter 'to' was not provided")
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	ok = commitChanges(changes.UserChanges, changes.GroupChanges, to)
 	if !ok {
 		fmt.Println("Failed to execute all changes without errors")
 		c.AbortWithError(http.StatusBadRequest, errors.New("Failed to execute all changes without errors"))
