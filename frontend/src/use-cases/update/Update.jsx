@@ -22,7 +22,7 @@ import {
 } from "./elements";
 import { getId } from "../../utils/utils";
 
-const formatEntry = entry => {
+export const formatEntry = entry => {
   let keys = Object.keys(entry);
   if (keys.includes("cid")) {
     return { ...entry, id: entry.cid };
@@ -40,7 +40,7 @@ const formatEntry = entry => {
   return entry;
 };
 
-const formatData = data => {
+export const formatData = data => {
   const ids = [];
   for (const change in data) {
     for (const type in data[change]) {
@@ -53,7 +53,7 @@ const formatData = data => {
   return [data, ids];
 };
 
-const getAllIds = data => {
+export const getAllIds = data => {
   const ids = [];
   for (const change in data) {
     for (const type in data[change]) {
@@ -65,7 +65,7 @@ const getAllIds = data => {
   return ids;
 };
 
-const filterData = (data, selected) => {
+export const filterData = (data, selected) => {
   for (const change in data) {
     for (const type in data[change]) {
       if (data[change][type] === null) {
