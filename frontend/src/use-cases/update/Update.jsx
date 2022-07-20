@@ -2,8 +2,12 @@ import {
   Box,
   Button,
   ButtonGroup,
+  Card,
   Checkbox,
+  FormControl,
   FormControlLabel,
+  IconButton,
+  Modal,
   Paper,
   Radio,
   RadioGroup,
@@ -15,6 +19,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useEffect, useState } from "react";
 import Axios from "axios";
 import "./Update.css";
@@ -88,6 +93,15 @@ export const filterData = (data, selected) => {
   return data;
 };
 
+const types = [
+  { id: "user-update", label: "User Updates" },
+  { id: "user-addition", label: "User Addition" },
+  { id: "user-deletion", label: "User Deletion" },
+  { id: "group-update", label: "Group Updates" },
+  { id: "group-addition", label: "Group Addition" },
+  { id: "group-deletion", label: "Group Deletion" },
+];
+
 const Update = () => {
   const [selected, setSelected] = useState([]);
   const [allSelected, setAllSelected] = useState(true);
@@ -96,6 +110,8 @@ const Update = () => {
   const [providerFile, setProviderFile] = useState("");
   const [consumer, setConsumer] = useState("json");
   const [consumerFile, setConsumerFile] = useState("data.json");
+  const [typeSelectOpen, setTypeSelectOpen] = useState(false);
+  const [typesSelected, setTypesSelected] = useState(types.map(t => t.id));
 
   const [data, setData] = useState({
     userChanges: {
@@ -139,6 +155,14 @@ const Update = () => {
     } else {
       setSelected([...selected, id]);
       setAllSelected(selected.length === numEntries - 1);
+    }
+  };
+
+  const handleTypeSelect = id => {
+    if (typesSelected.includes(id)) {
+      setTypesSelected(typesSelected.filter(e => e !== id));
+    } else {
+      setTypesSelected([...typesSelected, id]);
     }
   };
 
@@ -238,11 +262,52 @@ const Update = () => {
               <TableCell>Id</TableCell>
               <TableCell>Name</TableCell>
               <TableCell>E-mail(s)</TableCell>
-              <TableCell>Type</TableCell>
+              <TableCell>
+                Type
+                <IconButton
+                  onClick={() => {
+                    setTypeSelectOpen(true);
+                  }}
+                >
+                  <MoreVertIcon />
+                </IconButton>
+                <Modal
+                  open={typeSelectOpen}
+                  onClose={() => {
+                    console.log("Closing modal!");
+                    setTypeSelectOpen(false);
+                  }}
+                  aria-labelledby="parent-modal-title"
+                  aria-describedby="parent-modal-description"
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <Card sx={{ padding: "2rem" }}>
+                    <FormControl value={typesSelected}>
+                      {types.map(t => (
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              onChange={() => handleTypeSelect(t.id)}
+                              checked={typesSelected.includes(t.id)}
+                              value={t.id}
+                            />
+                          }
+                          label={t.label}
+                        />
+                      ))}
+                    </FormControl>
+                  </Card>
+                </Modal>
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {data.userChanges.userUpdates
+            {typesSelected.includes("user-changes") &&
+            data.userChanges.userUpdates
               ? data.userChanges.userUpdates.map(e => (
                   <UserUpdate
                     key={e.id}
@@ -252,7 +317,8 @@ const Update = () => {
                   />
                 ))
               : null}
-            {data.userChanges.additions
+            {typesSelected.includes("user-addition") &&
+            data.userChanges.additions
               ? data.userChanges.additions.map(e => (
                   <UserAddition
                     key={e.id}
@@ -262,7 +328,8 @@ const Update = () => {
                   />
                 ))
               : null}
-            {data.userChanges.deletions
+            {typesSelected.includes("user-deletion") &&
+            data.userChanges.deletions
               ? data.userChanges.deletions.map(e => (
                   <UserDeletion
                     key={e.id}
@@ -272,7 +339,8 @@ const Update = () => {
                   />
                 ))
               : null}
-            {data.groupChanges.groupUpdates
+            {typesSelected.includes("group-update") &&
+            data.groupChanges.groupUpdates
               ? data.groupChanges.groupUpdates.map(e => (
                   <GroupUpdate
                     key={e.id}
@@ -282,7 +350,8 @@ const Update = () => {
                   />
                 ))
               : null}
-            {data.groupChanges.additions
+            {typesSelected.includes("group-addition") &&
+            data.groupChanges.additions
               ? data.groupChanges.additions.map(e => (
                   <GroupAddition
                     key={e.id}
@@ -292,7 +361,8 @@ const Update = () => {
                   />
                 ))
               : null}
-            {data.groupChanges.deletions
+            {typesSelected.includes("group-deletion") &&
+            data.groupChanges.deletions
               ? data.groupChanges.deletions.map(e => (
                   <GroupDeletion
                     key={e.id}
