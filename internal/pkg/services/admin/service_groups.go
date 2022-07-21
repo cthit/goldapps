@@ -1,11 +1,11 @@
 package admin
 
 import (
-	"bytes"
 	"fmt"
-	"github.com/cthit/goldapps/internal/pkg/model"
-	"google.golang.org/api/admin/directory/v1" // Imports as admin
 	"time"
+
+	"github.com/cthit/goldapps/internal/pkg/model"
+	admin "google.golang.org/api/admin/directory/v1" // Imports as admin
 )
 
 func (s googleService) DeleteGroup(group model.Group) error {
@@ -121,6 +121,12 @@ func (s googleService) AddGroup(group model.Group) error {
 	return nil
 }
 
+type MembersResponse struct {
+	index   int
+	members []string
+	err     error
+}
+
 func (s googleService) GetGroups() ([]model.Group, error) {
 
 	adminGroups, err := s.getGoogleGroups(googleCustomer)
@@ -129,39 +135,34 @@ func (s googleService) GetGroups() ([]model.Group, error) {
 	}
 
 	groups := make([]model.Group, len(adminGroups))
+	response_chan := make(chan MembersResponse, len(adminGroups))
+	err = nil
+
 	for i, group := range adminGroups {
+		go func(email string, index int) {
+			members, err := s.getGoogleGroupMembers(email)
+			response_chan <- MembersResponse{index, members, err}
+		}(group.Email, i)
+	}
 
-		p := (i * 100) / len(groups)
-
-		builder := bytes.Buffer{}
-		for i := 0; i < 100; i++ {
-			if i < p {
-				builder.WriteByte('=')
-			} else if i == p {
-				builder.WriteByte('>')
-			} else {
-				builder.WriteByte(' ')
-			}
-
+	for i := 0; i < len(adminGroups); i++ {
+		response := <-response_chan
+		groups[response.index] = model.Group{
+			Email:   adminGroups[response.index].Email,
+			Members: response.members,
+			Aliases: adminGroups[response.index].Aliases,
 		}
-
-		fmt.Printf("\rProgress: [%s] %d/%d", builder.String(), i+1, len(groups))
-
-		members, err := s.getGoogleGroupMembers(group.Email)
-		if err != nil {
-			return nil, err
-		}
-
-		groups[i] = model.Group{
-			Email:   group.Email,
-			Members: members,
-			Aliases: group.Aliases,
+		if response.err != nil && err != nil {
+			err = response.err
 		}
 	}
+
 	fmt.Printf("\rDone\n")
+	if err != nil {
+		return nil, err
+	}
 
 	return groups, nil
-
 }
 
 func (s googleService) getGoogleGroups(customer string) ([]admin.Group, error) {
