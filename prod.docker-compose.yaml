@@ -30,7 +30,7 @@ services:
     environment:
       GIN_MODE: debug
       SESSION_SECRET: secret
-      AUTH_SECRET: secret
+      AUTH_SECRET: key
       CLIENT_ID: id
       GAMMA_URL: http://localhost:8081
       REDIRECT_GAMMA_URL: http://localhost:8081

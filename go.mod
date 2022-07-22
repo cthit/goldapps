@@ -3,7 +3,8 @@ module github.com/cthit/goldapps
 go 1.12
 
 require (
-	github.com/gin-gonic/gin v1.8.1 // indirect
+	github.com/gin-contrib/sessions v0.0.5
+	github.com/gin-gonic/gin v1.8.1
 	github.com/go-playground/validator/v10 v10.11.0 // indirect
 	github.com/goccy/go-json v0.9.8 // indirect
 	github.com/magiconair/properties v1.8.0

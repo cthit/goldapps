@@ -1,12 +1,18 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Update } from "./use-cases";
+import { UserProvider } from "./common/contexts/User.context";
+import { Callback, Update, Unauthorized } from "./use-cases";
+import history from "./utils/history";
 
 const App = () => {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Update />} />
-      </Routes>
+    <BrowserRouter history={history}>
+      <UserProvider>
+        <Routes>
+          <Route path="/callback" element={<Callback />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
+          <Route path="/" element={<Update />} />
+        </Routes>
+      </UserProvider>
     </BrowserRouter>
   );
 };
