@@ -23,12 +23,17 @@ func CreateGammaService(apiKey string, url string) (GammaService, error) {
 
 //Determins if the specified user in the specified group should have a gsuit account
 func shouldHaveMail(group *FKITGroup, member *FKITUser) bool {
-	return isKit(group) && member.Gdpr && group.Active
+	return isFkit(group) && member.Gdpr && group.Active
 }
 
 //Determins if specified group is a member of KIT
 func isKit(group *FKITGroup) bool {
-	return (group.SuperGroup.Type == "COMMITTEE" || group.SuperGroup.Type == "BOARD" || group.SuperGroup.Type == "FUNCTIONARIES")
+	return (group.SuperGroup.Type == "COMMITTEE" || group.SuperGroup.Type == "BOARD" || group.SuperGroup.Type == "FUNCTIONARIES") 
+}
+
+//Determins if specified group is a member of FKIT
+func isFkit(group *FKITGroup) bool {
+	return (isKit(group) || group.SuperGroup.Type == "SOCIETY")
 }
 
 //Returns the email which should be used for a specific user
