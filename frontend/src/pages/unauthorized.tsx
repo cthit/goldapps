@@ -1,6 +1,7 @@
 import { Typography } from "@mui/material";
+import React from "react";
 
-const Unauthorized = () => {
+export default function Unauthorized() {
   return (
     <div
       style={{
@@ -11,15 +12,11 @@ const Unauthorized = () => {
       }}
     >
       <Typography variant="h2">Unauthorized!</Typography>
-      <Typography variant="p">
-        You are not authorized to use this website
-      </Typography>
-      <Typography variant="p">
+      <p>You are not authorized to use this website</p>
+      <p>
         For more information, please contact IT responsible at the IT student
         division or digIT
-      </Typography>
+      </p>
     </div>
   );
-};
-
-export default Unauthorized;
+}

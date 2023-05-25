@@ -30,9 +30,10 @@ services:
     environment:
       GIN_MODE: debug
       SESSION_SECRET: secret
-      AUTH_SECRET: key
-      CLIENT_ID: id
+      COOKIE_DOMAIN: localhost
       GAMMA_URL: http://localhost:8081
       REDIRECT_GAMMA_URL: http://localhost:8081
-      CALLBACK_URL: http://localhost:3001/callback
-      COOKIE_DOMAIN: localhost
+      # Gamma client info
+      GAMMA_CLIENT_ID: id
+      GAMMA_CLIENT_SECRET: key
+      GAMMA_REDIRECT_URL: http://localhost:3001/callback
