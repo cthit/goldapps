@@ -33,7 +33,7 @@ export interface Group {
   email: string;
   type: string;
   members?: string[];
-  aliases: string[];
+  aliases?: string[];
   expendable: boolean;
 }
 

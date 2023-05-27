@@ -1,7 +1,8 @@
-import { TableCell } from "@mui/material";
-import { useMemo } from "react";
 import { Group } from "../lib/goldapps/types";
 import { arrayDiff, getIdFromEmail } from "../utils";
+import { ItemUnchanged } from "./ItemUnchanged";
+import { ItemAdded } from "./ItemAdded";
+import { ItemDeleted } from "./ItemDeleted";
 
 interface Props {
   before: Group;
@@ -9,27 +10,31 @@ interface Props {
 }
 
 export const GroupUpdateRow = ({ before, after }: Props) => {
-  const { additions, deletions, unchanged } = useMemo(
-    () => arrayDiff(before.members || [], after.members || []),
-    [before.members, after.members],
+  const { additions, deletions, unchanged } = arrayDiff(
+    before.members || [],
+    after.members || [],
   );
 
   return (
     <>
-      <TableCell>{getIdFromEmail(before.email)}</TableCell>
-      <TableCell>{before.email}</TableCell>
-      <TableCell>
+      <td>
+        <ItemUnchanged>{getIdFromEmail(before.email)}</ItemUnchanged>
+      </td>
+      <td>
+        <ItemUnchanged>{before.email}</ItemUnchanged>
+      </td>
+      <td>
         {unchanged.map(member => (
-          <div>{member}</div>
+          <ItemUnchanged key={member}>{member}</ItemUnchanged>
         ))}
         {deletions.map(member => (
-          <div className="mono-bold removed">- {member}</div>
+          <ItemDeleted key={member}>{member}</ItemDeleted>
         ))}
         {additions.map(member => (
-          <div className="mono-bold added">+ {member}</div>
+          <ItemAdded key={member}>{member}</ItemAdded>
         ))}
-      </TableCell>
-      <TableCell>Group Update</TableCell>
+      </td>
+      <td>Group Update</td>
     </>
   );
 };

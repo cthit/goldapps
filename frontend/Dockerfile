@@ -1,12 +1,12 @@
 FROM node:latest as build
 
-COPY package.json package-lock.json /
-
+COPY . .
+ENV NODE_ENV=development
+RUN npm install
+ENV NODE_ENV=production
+RUN npm run build
+RUN rm -rf node_modules
 RUN npm install
 
-COPY . .
-RUN npm run build
-
-FROM nginx:alpine
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=build ./build /usr/share/nginx/html
+EXPOSE 3000
+CMD npm run start

@@ -1,16 +1,15 @@
-import { Box } from "@mui/material";
-import { useState } from "react";
-import { SuggestionsTable } from "../components/SuggestionsTable";
-import { GetServerSideProps, InferGetServerSidePropsType } from "next";
-import { createGoldappsServerClient } from "../lib/goldapps/client";
-import { checkLogin } from "../lib/goldapps/auth";
-import { getSuggestions } from "../lib/goldapps/get-suggestions";
-import { commitSuggestions } from "../lib/goldapps/commit-suggestions";
-import { Suggestion, SuggestionWithState } from "../lib/goldapps/types";
+"use client";
 
-export default function IndexPage({
-  suggestions: serverSuggestions,
-}: InferGetServerSidePropsType<typeof getServerSideProps>) {
+import { useState } from "react";
+import { Suggestion, SuggestionWithState } from "../lib/goldapps/types";
+import { commitSuggestions } from "../lib/goldapps/commit-suggestions";
+import { SuggestionsTable } from "./SuggestionsTable";
+
+interface Props {
+  suggestions: Suggestion[];
+}
+
+export const Suggestions = ({ suggestions: serverSuggestions }: Props) => {
   const [suggestions, setSuggestions] = useState<SuggestionWithState[]>(
     serverSuggestions.map(suggestion => ({
       ...suggestion,
@@ -46,7 +45,7 @@ export default function IndexPage({
   };
 
   return (
-    <Box sx={{ width: "100%" }}>
+    <div className="max-xl mx-2 pt-1 lg:container lg:mx-auto">
       {suggestions !== null && (
         <SuggestionsTable
           suggestions={suggestions}
@@ -83,30 +82,6 @@ export default function IndexPage({
           onCommit={onCommit}
         />
       )}
-    </Box>
+    </div>
   );
-}
-
-export const getServerSideProps: GetServerSideProps<{
-  suggestions: Suggestion[];
-}> = async ({ req }) => {
-  const goldappsSessionCookie = req.cookies["goldapps-session"] || "";
-  const goldappsClient = createGoldappsServerClient(goldappsSessionCookie);
-
-  const redirectUri = await checkLogin(goldappsClient);
-  if (redirectUri) {
-    return {
-      redirect: {
-        destination: redirectUri,
-        permanent: false,
-      },
-    };
-  }
-
-  const suggestions = await getSuggestions(goldappsClient);
-  return {
-    props: {
-      suggestions,
-    },
-  };
 };

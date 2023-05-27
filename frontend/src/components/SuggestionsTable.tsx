@@ -1,15 +1,3 @@
-import {
-  Box,
-  Button,
-  Checkbox,
-  Paper,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-} from "@mui/material";
-import React from "react";
 import { UserAdditionRow } from "./UserAdditionRow";
 import { UserDeletionRow } from "./UserDeletionRow";
 import { UserUpdateRow } from "./UserUpdateRow";
@@ -33,45 +21,49 @@ export const SuggestionsTable = ({
 }: Props) => {
   const allSelected = suggestions.every(suggestion => suggestion.selected);
   return (
-    <Box sx={{ padding: "2rem" }}>
-      <TableContainer component={Paper}>
-        <TableHead>
-          <TableRow>
-            <TableCell padding="checkbox">
-              <Checkbox checked={allSelected} onChange={onSelectAllToggle} />
-            </TableCell>
-            <TableCell>Id</TableCell>
-            <TableCell>Name</TableCell>
-            <TableCell>E-mail(s)</TableCell>
-            <TableCell>Type</TableCell>
-            <TableCell>Error</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
+    <>
+      <table className="w-full border-collapse text-left">
+        <thead>
+          <tr>
+            <th>
+              <input
+                type="checkbox"
+                checked={allSelected}
+                onChange={onSelectAllToggle}
+              />
+            </th>
+            <th>Id</th>
+            <th>Name</th>
+            <th>E-mail(s)</th>
+            <th>Type</th>
+            <th>Error</th>
+          </tr>
+        </thead>
+        <tbody>
           {suggestions.map((suggestion, suggestionIndex) => (
-            <TableRow key={suggestionIndex}>
-              <TableCell padding="checkbox">
-                <Checkbox
+            <tr key={suggestionIndex} className="border-b border-t py-5">
+              <td>
+                <input
+                  type="checkbox"
                   checked={suggestion.selected}
                   onChange={() => onSelectToggle(suggestionIndex)}
                 />
-              </TableCell>
+              </td>
               {transformSuggestionToRow(suggestion)}
-              <TableCell>{suggestion.error}</TableCell>
-            </TableRow>
+              <td>{suggestion.error}</td>
+            </tr>
           ))}
-        </TableBody>
-      </TableContainer>
-      <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <Button
-          sx={{ marginTop: "2rem" }}
-          variant="outlined"
+        </tbody>
+      </table>
+      <div className="flex justify-end">
+        <button
+          className="mt-2 rounded bg-blue-500 px-4 py-2 text-white"
           onClick={onCommit}
         >
           Commit
-        </Button>
+        </button>
       </div>
-    </Box>
+    </>
   );
 };
 
