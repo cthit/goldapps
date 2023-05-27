@@ -1,4 +1,4 @@
-import { createGoldappsBrowserClient } from "./client";
+import { createGoldappsBrowserClient } from "./client-browser";
 import { unflattedSuggestions } from "./transform";
 import { Suggestion } from "./types";
 

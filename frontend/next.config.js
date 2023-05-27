@@ -5,7 +5,7 @@ const nextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "http://localhost:8080/api/:path*",
+        destination: `${String(process.env.GOLDAPPS_URL)}/api/:path*`,
       },
     ];
   },
