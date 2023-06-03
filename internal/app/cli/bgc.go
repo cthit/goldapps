@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 
+	"github.com/cthit/goldapps/internal/pkg"
 	"github.com/cthit/goldapps/internal/pkg/actions"
 	"github.com/cthit/goldapps/internal/pkg/duplicates"
 	"github.com/cthit/goldapps/internal/pkg/model"
@@ -16,7 +17,7 @@ const (
 func init() {
 	loadFlags()
 
-	err := loadConfig()
+	err := LoadConfig()
 	if err != nil {
 		fmt.Println("Failed to load config.")
 		panic(err)
@@ -51,7 +52,13 @@ func Run() {
 	}
 
 	// Get and process additions
-	providerGroups, providerUsers = addAdditions(providerGroups, providerUsers)
+	var from string
+	if flags.interactive {
+		from = askString("Which file would you like to use for additions?, Just press enter to skip", "")
+	} else {
+		from = flags.additions
+	}
+	providerGroups, providerUsers = pkg.AddAdditions(providerGroups, providerUsers, from)
 
 	// Check for and handle duplicates
 	providerUsers, providerGroups = duplicates.RemoveDuplicates(providerUsers, providerGroups)

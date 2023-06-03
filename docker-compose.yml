@@ -9,11 +9,15 @@ services:
 
   gamma-frontend:
     image: cthit/gamma-frontend:development
+    environment:
+      HTTP_PROXY: http://gamma-backend:8081
     ports:
       - 3000:3000
 
   gamma-backend:
-    image: cthit/gamma-backend:development
+    # Starta med cthit/gamma-backend:development för att få in mock data
+    # Byt sedan till cthit/gamma-backend för att få rätt APIer
+    image: cthit/gamma-backend
     environment:
       # Default admin user name = admin
       # Default admin password  = password
@@ -34,7 +38,7 @@ services:
       COOKIE_DOMAIN: localhost
       PRODUCTION: "false"
       IS_MOCKING_CLIENT: "true"
-      DEFAULT_REDIRECT_URI: http://localhost:3001/callback
+      DEFAULT_REDIRECT_URI: http://localhost:3001/api/authenticate
     volumes:
       - ./mock.json:/mock/mock.json
     ports:

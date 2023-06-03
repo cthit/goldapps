@@ -24,6 +24,7 @@ func gammaReq(s *GammaService, endpoint string, response interface{}) error {
 		log.Println(err)
 		return err
 	}
+	fmt.Printf("Gamma request sent to: %s [key: %s] status %d\n", endpoint, s.apiKey, resp.StatusCode)
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

@@ -5,8 +5,7 @@ services:
       dockerfile: Dockerfile
       context: .
     image: goldapps:stable
-    restart: always
-    entrypoint: ./sleep_and_run.sh
+    network_mode: host # Easier since gamma is running with a different docker-compose
     command: [
       "-from ldap",
       "-to gapps",
@@ -18,5 +17,23 @@ services:
       - ./config.toml:/app/config.toml:ro
       - ./gapps.json:/app/gapps.json:ro
       - ./additions.json:/app/additions.json:ro
+
+  web:
+    build:
+      dockerfile: Dockerfile.web
+      context: .
+    network_mode: host # Easier since gamma is running with a different docker-compose
+    volumes:
+      - ./config.toml:/app/config.toml:ro
+      - ./gapps.json:/app/gapps.json:ro
+      - ./additions.json:/app/additions.json:ro
     environment:
-      - WAIT=1h
+      GIN_MODE: debug
+      SESSION_SECRET: secret
+      COOKIE_DOMAIN: localhost
+      GAMMA_URL: http://localhost:8081
+      REDIRECT_GAMMA_URL: http://localhost:8081
+      # Gamma client info
+      GAMMA_CLIENT_ID: id
+      GAMMA_CLIENT_SECRET: key
+      GAMMA_REDIRECT_URL: http://localhost:3001/callback

@@ -3,9 +3,10 @@ package json
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cthit/goldapps/internal/pkg/model"
 	"io/ioutil"
 	"os"
+
+	"github.com/cthit/goldapps/internal/pkg/model"
 )
 
 type Service struct {

@@ -17,8 +17,8 @@ type Users []User
 // Data struct representing how a user should look before and after an update
 // Allows for efficient updates as application doesn't have to re-upload whole user
 type UserUpdate struct {
-	Before User
-	After  User
+	Before User `json:"before"`
+	After  User `json:"after"`
 }
 
 // Search for username(cid) in list of groups
