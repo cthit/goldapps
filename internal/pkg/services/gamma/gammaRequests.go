@@ -60,6 +60,14 @@ func getActiveGroups(s *GammaService) ([]FKITGroup, error) {
 	groups := struct {
 		GetFKITGroupResponse []FKITGroup `json:"groups"`
 	}{}
-	err := gammaReq(s, "/api/admin/groups/active", &groups)
-	return groups.GetFKITGroupResponse, err
+	err := gammaReq(s, "/api/admin/groups", &groups)
+	activeGroups := []FKITGroup{}
+	for i := range groups.GetFKITGroupResponse {
+		group := groups.GetFKITGroupResponse[i]
+		if group.SuperGroup.Type != "ALUMNI" {
+			activeGroups = append(activeGroups, group)
+		}
+	}
+
+	return activeGroups, err
 }

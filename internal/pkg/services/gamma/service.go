@@ -23,7 +23,7 @@ func CreateGammaService(apiKey string, url string) (GammaService, error) {
 
 //Determins if the specified user in the specified group should have a gsuit account
 func shouldHaveMail(group *FKITGroup, member *FKITUser) bool {
-	return isFkit(group) && member.Gdpr && group.Active
+	return isFkit(group) && member.Gdpr
 }
 
 //Determins if specified group is a member of KIT
