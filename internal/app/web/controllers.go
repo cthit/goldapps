@@ -63,8 +63,6 @@ func executeChanges(c *gin.Context) {
 		return
 	}
 
-	fmt.Println(changes)
-
 	if changes.To == "" {
 		fmt.Println("'to' was not provided")
 		c.AbortWithStatus(http.StatusBadRequest)
