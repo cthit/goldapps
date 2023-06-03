@@ -3,7 +3,9 @@ import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
   const GOLDAPPS_URL = process.env.GOLDAPPS_URL || "http://localhost:8080";
-  return NextResponse.rewrite(GOLDAPPS_URL + request.nextUrl.pathname);
+  return NextResponse.rewrite(
+    GOLDAPPS_URL + request.nextUrl.pathname + request.nextUrl.search,
+  );
 }
 
 export const config = {
