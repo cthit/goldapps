@@ -38,7 +38,7 @@ services:
       COOKIE_DOMAIN: localhost
       PRODUCTION: "false"
       IS_MOCKING_CLIENT: "true"
-      DEFAULT_REDIRECT_URI: http://localhost:3001/callback
+      DEFAULT_REDIRECT_URI: http://localhost:3001/api/authenticate
     volumes:
       - ./mock.json:/mock/mock.json
     ports:
