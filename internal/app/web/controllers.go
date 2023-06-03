@@ -16,6 +16,11 @@ type ChangeBody struct {
 	GroupChanges actions.GroupActions `json:"groupChanges"`
 }
 
+type ChangeRequestBody struct {
+	ChangeBody
+	To string `json:"to"`
+}
+
 func getSuggestions(c *gin.Context) {
 	from, ok := c.GetQuery("from")
 	if !ok {
@@ -50,7 +55,7 @@ func executeChanges(c *gin.Context) {
 		return
 	}
 
-	changes := ChangeBody{}
+	changes := ChangeRequestBody{}
 	err = json.Unmarshal(body, &changes)
 	if err != nil {
 		fmt.Println(err)
@@ -58,14 +63,13 @@ func executeChanges(c *gin.Context) {
 		return
 	}
 
-	to, ok := c.GetQuery("to")
-	if !ok {
-		fmt.Println("Parameter 'to' was not provided")
+	if changes.To == "" {
+		fmt.Println("'to' was not provided")
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
-	ok = commitChanges(changes.UserChanges, changes.GroupChanges, to)
+	ok := commitChanges(changes.UserChanges, changes.GroupChanges, changes.To)
 	if !ok {
 		fmt.Println("Failed to execute all changes without errors")
 		c.AbortWithError(http.StatusBadRequest, errors.New("Failed to execute all changes without errors"))

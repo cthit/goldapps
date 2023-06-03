@@ -17,14 +17,14 @@ import (
 var gamma_url = viper.GetString("gamma.provider.url")
 
 var client = oauth2.Config{
-	ClientID:     os.Getenv("CLIENT_ID"),
-	ClientSecret: os.Getenv("AUTH_SECRET"),
+	ClientID:     os.Getenv("GAMMA_CLIENT_ID"),
+	ClientSecret: os.Getenv("GAMMA_CLIENT_SECRET"),
 	Endpoint: oauth2.Endpoint{
-		AuthURL:   fmt.Sprintf("%s/api/oauth/authorize", os.Getenv("REDIRECT_GAMMA_URL")),
+		AuthURL:   fmt.Sprintf("%s/api/oauth/authorize", os.Getenv("GAMMA_URL")),
 		TokenURL:  fmt.Sprintf("%s/api/oauth/token", gamma_url),
 		AuthStyle: oauth2.AuthStyleAutoDetect,
 	},
-	RedirectURL: os.Getenv("CALLBACK_URL"),
+	RedirectURL: os.Getenv("GAMMA_REDIRECT_URL"),
 	Scopes:      nil,
 }
 
@@ -91,12 +91,12 @@ func authenticate(c *gin.Context) {
 	}
 
 	if !found {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, getLoginURL())
+		c.Redirect(http.StatusTemporaryRedirect, "/unauthorized")
 		return
 	}
 
 	session := sessions.Default(c)
 	session.Set("is_admin", "true")
 	session.Save()
-	c.Status(http.StatusOK)
+	c.Redirect(http.StatusTemporaryRedirect, "/")
 }
