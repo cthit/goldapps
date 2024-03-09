@@ -56,6 +56,18 @@ services:
     networks:
       - gamma-internal
 
+  gamma-mock:
+    build:
+      context: gamma_mock
+      dockerfile: Dockerfile
+    volumes:
+      - ./gamma_mock/src/groups.json:/app/src/groups.json
+      - ./gamma_mock/src/users.json:/app/src/users.json
+    ports:
+      - 2345:8081
+    networks:
+      - gamma
+
 networks:
   gamma:
     external: True
