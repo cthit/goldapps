@@ -11,6 +11,7 @@ import (
 	"github.com/cthit/goldapps/internal/pkg/model"
 	"github.com/cthit/goldapps/internal/pkg/services"
 	"github.com/cthit/goldapps/internal/pkg/services/admin"
+	"github.com/cthit/goldapps/internal/pkg/services/auth"
 	"github.com/cthit/goldapps/internal/pkg/services/gamma"
 	"github.com/cthit/goldapps/internal/pkg/services/json"
 	"github.com/spf13/viper"
@@ -48,6 +49,10 @@ func getProvider(fromJson string) (services.CollectionService, error) {
 		provider, err = gamma.CreateGammaService(
 			viper.GetString("gamma.provider.apiKey"),
 			viper.GetString("gamma.provider.url"))
+	} else if fromJson == "auth" {
+		provider, _ = auth.CreateAuthService(
+			viper.GetString("auth.provider.apiKey"),
+			viper.GetString("auth.provider.url"))
 	} else if isJson {
 		provider, err = json.NewJsonService(fromJson)
 	} else {
