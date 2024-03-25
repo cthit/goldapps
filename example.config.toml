@@ -10,6 +10,9 @@
     apiKey = "key"
     url = "http://localhost:8081"
 
+[additions]
+	file = "additions.json"
+
 [ldap]
 	url = "ldap.mydomain.ex:636"
 	servername = "mydomain.ex"

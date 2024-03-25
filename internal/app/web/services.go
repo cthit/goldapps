@@ -111,7 +111,7 @@ func getChangeSuggestions(fromJson string, toJson string) (actions.UserActions, 
 	consumerUsers = collectUsers(consumer)
 
 	// Get and process additions
-	providerGroups, providerUsers = pkg.AddAdditions(providerGroups, providerUsers, "additions.json")
+	providerGroups, providerUsers = pkg.AddAdditions(providerGroups, providerUsers, viper.GetString("additions.file"))
 
 	// Check for and handle duplicates
 	providerUsers, providerGroups = duplicates.RemoveDuplicates(providerUsers, providerGroups)
