@@ -4,13 +4,15 @@ A system for syncing LDAP with gsuite and json files written in Go
 
 ### Features
 
-- Migrate groups (from -> to):
-  - ldap -> gapps
-  - ldap -> json
-  - gapps -> json
-  - gapps -> gapps
-  - json -> gapps
-  - (json -> json)
+Producers
+- LDAP
+- JSON
+- Gamma (1.0)
+- Auth (Gamma 2.0)
+
+Consumers
+- GApps
+- JSON
 
 ## Dummy setup
 
