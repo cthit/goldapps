@@ -3,7 +3,7 @@ package auth
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 
@@ -15,7 +15,7 @@ type AuthService struct {
 	url    string
 }
 
-//Creates a auth service which has the url to auth and the pre-shared key
+// Creates a auth service which has the url to auth and the pre-shared key
 func CreateAuthService(apiKey string, url string) (AuthService, error) {
 	return AuthService{
 		apiKey: apiKey,
@@ -23,7 +23,7 @@ func CreateAuthService(apiKey string, url string) (AuthService, error) {
 	}, nil
 }
 
-//Executes a generic get request with api key
+// Executes a generic get request with api key
 func request(s *AuthService, endpoint string, response interface{}) error {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s", s.url, endpoint), nil)
 	if err != nil {
@@ -41,7 +41,7 @@ func request(s *AuthService, endpoint string, response interface{}) error {
 	}
 	fmt.Printf("Request sent to: %s [key: %s] status %d\n", endpoint, s.apiKey, resp.StatusCode)
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -57,25 +57,25 @@ func request(s *AuthService, endpoint string, response interface{}) error {
 }
 
 func (s AuthService) GetGroups() ([]model.Group, error) {
-	var groups []model.Group
+	var groups AuthSuperGroups
 
-	err := request(&s, "/api/goldapps/groups", &groups)
+	err := request(&s, "/api/account-scaffold/v1/supergroups", &groups)
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
 
-	return groups, nil
+	return groups.ToGroups(), nil
 }
 
 func (s AuthService) GetUsers() ([]model.User, error) {
-	var users []model.User
+	var users AuthUsers
 
-	err := request(&s, "/api/goldapps/users", &users)
+	err := request(&s, "/api/account-scaffold/v1/users", &users)
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
 
-	return users, nil
+	return users.ToUsers(), nil
 }
