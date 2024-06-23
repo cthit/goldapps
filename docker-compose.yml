@@ -6,6 +6,8 @@ services:
       POSTGRES_USER: user
       POSTGRES_DB: postgres
       POSTGRES_PASSWORD: password
+    networks:
+      - gamma-internal
 
   gamma-frontend:
     image: cthit/gamma-frontend:development
@@ -13,6 +15,8 @@ services:
       HTTP_PROXY: http://gamma-backend:8081
     ports:
       - 3000:3000
+    networks:
+      - gamma-internal
 
   gamma-backend:
     # Starta med cthit/gamma-backend:development för att få in mock data
@@ -43,6 +47,16 @@ services:
       - ./mock.json:/mock/mock.json
     ports:
       - 8081:8081
+    networks:
+      - gamma
+      - gamma-internal
 
   redis:
     image: redis:5.0
+    networks:
+      - gamma-internal
+
+networks:
+  gamma:
+    external: True
+  gamma-internal:

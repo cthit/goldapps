@@ -5,28 +5,23 @@ services:
       dockerfile: Dockerfile
       context: .
     image: goldapps:stable
-    network_mode: host # Easier since gamma is running with a different docker-compose
-    command: [
-      "-from ldap",
-      "-to gapps",
-      "-additions additions.json",
-      "-y",
-      "-dry"
-    ]
     volumes:
       - ./config.toml:/app/config.toml:ro
       - ./gapps.json:/app/gapps.json:ro
       - ./additions.json:/app/additions.json:ro
+      - ./gamma.json:/app/gamma.json:ro
+    networks:
+      - gamma
 
   web:
     build:
       dockerfile: Dockerfile.web
       context: .
-    network_mode: host # Easier since gamma is running with a different docker-compose
     volumes:
       - ./config.toml:/app/config.toml:ro
       - ./gapps.json:/app/gapps.json:ro
       - ./additions.json:/app/additions.json:ro
+      - ./gamma.json:/app/gamma.json:ro
     environment:
       GIN_MODE: debug
       SESSION_SECRET: secret
@@ -36,4 +31,12 @@ services:
       # Gamma client info
       GAMMA_CLIENT_ID: id
       GAMMA_CLIENT_SECRET: key
-      GAMMA_REDIRECT_URL: http://localhost:3001/callback
+      GAMMA_REDIRECT_URL: http://localhost:8080/api/authenticate
+    networks:
+      - gamma
+    ports:
+      - 8080:8080
+
+networks:
+  gamma:
+    external: True

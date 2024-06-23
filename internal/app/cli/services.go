@@ -7,6 +7,7 @@ import (
 	"github.com/cthit/goldapps/internal/pkg/model"
 	"github.com/cthit/goldapps/internal/pkg/services"
 	"github.com/cthit/goldapps/internal/pkg/services/admin"
+	"github.com/cthit/goldapps/internal/pkg/services/auth"
 	"github.com/cthit/goldapps/internal/pkg/services/gamma"
 	"github.com/cthit/goldapps/internal/pkg/services/json"
 	"github.com/cthit/goldapps/internal/pkg/services/ldap"
@@ -80,7 +81,12 @@ func getProvider() services.CollectionService {
 			panic(err)
 		}
 		return provider
-
+	case "auth":
+		provider, _ := auth.CreateAuthService(
+			viper.GetString("auth.provider.apiKey"),
+			viper.GetString("auth.provider.url"),
+		)
+		return provider
 	default:
 		isJson, _ := regexp.MatchString(`.+\.json$`, from)
 		if isJson {
