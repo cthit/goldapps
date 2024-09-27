@@ -1,5 +1,5 @@
 # Dockerfile for goldapps production
-FROM golang:1.18.4-alpine3.15 AS buildStage
+FROM golang:1.23-alpine AS buildStage
 
 # Install git
 RUN apk update
