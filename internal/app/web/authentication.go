@@ -50,7 +50,8 @@ func generateLoginURL(c *gin.Context) (string, error) {
 		fmt.Println("Failed to generate state")
 		return "", err
 	}
-	c.SetCookie("oauth_state", state, int(time.Hour.Seconds()), "/", os.Getenv("COOKIE_DOMAIN"), c.Request.TLS != nil, true)
+	c.SetSameSite(http.SameSiteNoneMode)
+	c.SetCookie("oauth_state", state, int(time.Hour.Seconds()), "/", os.Getenv("COOKIE_DOMAIN"), true, true)
 	return client.AuthCodeURL(state), nil
 }
 
