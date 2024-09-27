@@ -2,50 +2,75 @@ package web
 
 import (
 	"context"
-	"encoding/json"
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
-	"io/ioutil"
+	"github.com/coreos/go-oidc/v3/oidc"
+	"io"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
 )
 
-var gamma_url = viper.GetString("gamma.provider.url")
+var client oauth2.Config
+var provider *oidc.Provider
 
-var client = oauth2.Config{
-	ClientID:     os.Getenv("GAMMA_CLIENT_ID"),
-	ClientSecret: os.Getenv("GAMMA_CLIENT_SECRET"),
-	Endpoint: oauth2.Endpoint{
-		AuthURL:   fmt.Sprintf("%s/api/oauth/authorize", os.Getenv("GAMMA_URL")),
-		TokenURL:  fmt.Sprintf("%s/api/oauth/token", gamma_url),
-		AuthStyle: oauth2.AuthStyleAutoDetect,
-	},
-	RedirectURL: os.Getenv("GAMMA_REDIRECT_URL"),
-	Scopes:      nil,
+func randString(nByte int) (string, error) {
+	b := make([]byte, nByte)
+	if _, err := io.ReadFull(rand.Reader, b); err != nil {
+		return "", err
+	}
+	return base64.RawURLEncoding.EncodeToString(b), nil
 }
 
-func getLoginURL() string {
-	return fmt.Sprintf("%s?response_type=code&client_id=%s&redirect_uri=%s",
-		client.Endpoint.AuthURL,
-		client.ClientID,
-		client.RedirectURL)
+func initOIDC() error {
+	var err error
+	provider, err = oidc.NewProvider(context.Background(), os.Getenv("OPENID_PROVIDER_URL"))
+	if err != nil {
+		return err
+	}
+
+	client = oauth2.Config{
+		ClientID:     os.Getenv("OPENID_CLIENT_ID"),
+		ClientSecret: os.Getenv("OPENID_CLIENT_SECRET"),
+		Endpoint:     provider.Endpoint(),
+		RedirectURL:  os.Getenv("OPENID_REDIRECT_URL"),
+		Scopes:       []string{oidc.ScopeOpenID, "profile"},
+	}
+	return nil
+}
+
+func generateLoginURL(c *gin.Context) (string, error) {
+	state, err := randString(16)
+	if err != nil {
+		fmt.Println("Failed to generate state")
+		return "", err
+	}
+	c.SetCookie("oauth_state", state, int(time.Hour.Seconds()), "/", os.Getenv("COOKIE_DOMAIN"), c.Request.TLS != nil, true)
+	return client.AuthCodeURL(state), nil
 }
 
 func requireLogin(next func(*gin.Context)) func(*gin.Context) {
 	return func(c *gin.Context) {
 		session := sessions.Default(c)
-		is_admin := session.Get("is_admin")
-		if is_admin == "true" {
+		isAdmin := session.Get("is_admin")
+		if isAdmin == "true" {
 			next(c)
 			return
 		}
 		session.Clear()
 		session.Save()
-		c.AbortWithStatusJSON(http.StatusUnauthorized, getLoginURL())
+		loginURL, err := generateLoginURL(c)
+		if err != nil {
+			fmt.Println("Failed to get login URL")
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+		c.AbortWithStatusJSON(http.StatusUnauthorized, loginURL)
 		return
 	}
 }
@@ -54,46 +79,32 @@ func checkLogin(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-type User struct {
-	Authorities []struct {
-		Id        string `json:"id"`
-		Authority string `json:"authority"`
-	} `json:"authorities"`
-}
-
 func authenticate(c *gin.Context) {
-	code := c.Query("code")
-	token, err := client.Exchange(context.Background(), code)
+	state, err := c.Cookie("oauth_state")
 	if err != nil {
-		fmt.Println("Failed to authenticate user")
-		c.AbortWithError(http.StatusUnauthorized, err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, "state not found")
+		return
+	}
+	if c.Query("state") != state {
+		c.AbortWithStatusJSON(http.StatusBadRequest, "state mismatch")
 		return
 	}
 
-	gammaQuery := fmt.Sprintf("%s/api/users/me", gamma_url)
-	resp, err := client.Client(context.Background(), token).Get(gammaQuery)
+	oauth2Token, err := client.Exchange(c, c.Query("code"))
 	if err != nil {
-		fmt.Println("Failed to get user from gamma")
-		c.AbortWithError(http.StatusUnauthorized, err)
+		fmt.Println("Failed to exchange token" + err.Error())
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	user := User{}
-	body, _ := ioutil.ReadAll(resp.Body)
-	json.Unmarshal(body, &user)
-
-	found := false
-	for _, auth := range user.Authorities {
-		if auth.Authority == "admin" {
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		c.Redirect(http.StatusTemporaryRedirect, "/unauthorized")
+	userInfo, err := provider.UserInfo(c, oauth2.StaticTokenSource(oauth2Token))
+	if err != nil {
+		fmt.Println("Failed to get userinfo" + err.Error())
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
+
+	fmt.Println("User " + userInfo.Subject + " authenticated")
 
 	session := sessions.Default(c)
 	session.Set("is_admin", "true")

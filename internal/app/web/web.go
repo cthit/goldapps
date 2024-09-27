@@ -30,6 +30,13 @@ func Run() {
 		return
 	}
 
+	oicdErr := initOIDC()
+	if oicdErr != nil {
+		fmt.Println("Failed to initialize OIDC")
+		fmt.Println(oicdErr)
+		return
+	}
+
 	r.GET("/api/checkLogin", requireLogin(checkLogin))
 	r.GET("/api/authenticate", authenticate)
 
