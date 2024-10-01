@@ -6,7 +6,7 @@ import { createGoldappsServerClient } from "../lib/goldapps/client-server";
 
 async function fetchSuggestions() {
   const goldappsClient = createGoldappsServerClient();
-  const redirectUri = await checkLogin(goldappsClient);
+  const redirectUri = await checkLogin();
   if (redirectUri) {
     return redirect(redirectUri);
   }
