@@ -7,7 +7,7 @@ export async function getSuggestions(client: AxiosInstance) {
     "/api/suggestions",
     {
       params: {
-        from: "gamma",
+        from: "auth",
         to: process.env.NODE_ENV === "production" ? "gapps" : "gamma.json",
       },
     },
