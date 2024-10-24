@@ -4,17 +4,14 @@ import { redirect } from "next/navigation";
 import { getSuggestions } from "../lib/goldapps/get-suggestions";
 import { createGoldappsServerClient } from "../lib/goldapps/client-server";
 
-async function fetchSuggestions() {
-  const goldappsClient = createGoldappsServerClient();
-  const redirectUri = await checkLogin();
-  if (redirectUri) {
-    return redirect(redirectUri);
-  }
 
-  return getSuggestions(goldappsClient);
-}
 
 export default async function IndexPage() {
+  const fetchSuggestions = async () => {
+    const goldappsClient = createGoldappsServerClient();
+    return getSuggestions(goldappsClient);
+  }
+
   const suggestions = await fetchSuggestions();
   return <Suggestions suggestions={suggestions} />;
 }
