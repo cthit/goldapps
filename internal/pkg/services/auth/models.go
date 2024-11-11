@@ -1,6 +1,9 @@
 package auth
 
-import "github.com/cthit/goldapps/internal/pkg/model"
+import (
+	"github.com/cthit/goldapps/internal/pkg/model"
+	"strings"
+)
 
 type AuthSuperGroup struct {
 	Name       string `json:"name"`
@@ -15,6 +18,7 @@ type AuthSuperGroup struct {
 		} `json:"post"`
 		User AuthUser `json:"user"`
 	} `json:"members"`
+	UseManagedAccount bool `json:"useManagedAccount"`
 }
 
 type AuthUser struct {
@@ -36,7 +40,7 @@ func (user AuthUser) ToUser() model.Users {
 			FirstName:  user.FirstName,
 			SecondName: user.LastName,
 			Nick:       user.Nick,
-			Mail:       user.Email,
+			Mail:       strings.ToLower(user.Cid) + "@chalmers.it",
 		},
 	}
 }
@@ -51,12 +55,18 @@ func (users AuthUsers) ToUsers() model.Users {
 
 func (superGroup AuthSuperGroup) ToGroup() model.Group {
 	group := model.Group{
-		Email:   superGroup.Name + "@chalmers.it",
+		Email:   strings.ToLower(superGroup.Name) + "@chalmers.it",
 		Type:    superGroup.Type,
 		Aliases: []string{},
 	}
 	for _, member := range superGroup.Members {
-		group.Members = append(group.Members, member.User.Email)
+		var memberEmail string
+		if superGroup.UseManagedAccount {
+			memberEmail = member.User.Cid + "@chalmers.it"
+		} else {
+			memberEmail = member.User.Email
+		}
+		group.Members = append(group.Members, strings.ToLower(memberEmail))
 	}
 	return group
 }
