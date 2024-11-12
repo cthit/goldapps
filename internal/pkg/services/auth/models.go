@@ -95,7 +95,6 @@ func (superGroup AuthSuperGroup) ToGroups() model.Groups {
 						Type:    superGroup.Type,
 						Aliases: []string{},
 					}
-
 				}
 				memberGroupPostGroup.Members = append(memberGroupPostGroup.Members, memberEmail)
 				memberGroupPostGroups[member.Post.EmailPrefix] = memberGroupPostGroup
@@ -117,6 +116,9 @@ func (superGroup AuthSuperGroup) ToGroups() model.Groups {
 			memberGroup.Members = append(memberGroup.Members, memberEmail)
 		}
 		outerGroup.Members = append(outerGroup.Members, memberGroup.Email)
+		for _, memberGroupPostGroup := range memberGroupPostGroups {
+			groups = append(groups, memberGroupPostGroup)
+		}
 		groups = append(groups, memberGroup)
 	}
 	for _, postGroup := range superGroupPostGroups {
