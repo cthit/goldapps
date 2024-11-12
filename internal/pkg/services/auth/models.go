@@ -2,13 +2,21 @@ package auth
 
 import (
 	"github.com/cthit/goldapps/internal/pkg/model"
+	"slices"
 	"strings"
 )
 
 type AuthSuperGroup struct {
+	Name              string      `json:"name"`
+	PrettyName        string      `json:"prettyName"`
+	Type              string      `json:"type"`
+	Groups            []AuthGroup `json:"groups"`
+	UseManagedAccount bool        `json:"useManagedAccount"`
+}
+
+type AuthGroup struct {
 	Name       string `json:"name"`
 	PrettyName string `json:"prettyName"`
-	Type       string `json:"type"`
 	Members    []struct {
 		Post struct {
 			PostID      string `json:"postId"`
@@ -17,8 +25,7 @@ type AuthSuperGroup struct {
 			EmailPrefix string `json:"emailPrefix"`
 		} `json:"post"`
 		User AuthUser `json:"user"`
-	} `json:"members"`
-	UseManagedAccount bool `json:"useManagedAccount"`
+	}
 }
 
 type AuthUser struct {
@@ -53,28 +60,76 @@ func (users AuthUsers) ToUsers() model.Users {
 	return usersList
 }
 
-func (superGroup AuthSuperGroup) ToGroup() model.Group {
-	group := model.Group{
+func (superGroup AuthSuperGroup) ToGroups() model.Groups {
+	groups := model.Groups{}
+	outerGroup := model.Group{
 		Email:   strings.ToLower(superGroup.Name) + "@chalmers.it",
 		Type:    superGroup.Type,
 		Aliases: []string{},
 	}
-	for _, member := range superGroup.Members {
-		var memberEmail string
-		if superGroup.UseManagedAccount {
-			memberEmail = member.User.Cid + "@chalmers.it"
-		} else {
-			memberEmail = member.User.Email
+
+	superGroupPostGroups := make(map[string]model.Group)
+
+	for _, group := range superGroup.Groups {
+		memberGroup := model.Group{
+			Email:   strings.ToLower(group.Name) + "@chalmers.it",
+			Type:    superGroup.Type,
+			Aliases: []string{},
 		}
-		group.Members = append(group.Members, strings.ToLower(memberEmail))
+		memberGroupPostGroups := make(map[string]model.Group)
+
+		for _, member := range group.Members {
+
+			var memberEmail string
+			if superGroup.UseManagedAccount {
+				memberEmail = member.User.Cid + "@chalmers.it"
+			} else {
+				memberEmail = member.User.Email
+			}
+
+			if member.Post.EmailPrefix != "" {
+				memberGroupPostGroup, exists := memberGroupPostGroups[member.Post.EmailPrefix]
+				if !exists {
+					memberGroupPostGroup = model.Group{
+						Email:   strings.ToLower(member.Post.EmailPrefix + "." + group.Name + "@chalmers.it"),
+						Type:    superGroup.Type,
+						Aliases: []string{},
+					}
+
+				}
+				memberGroupPostGroup.Members = append(memberGroupPostGroup.Members, memberEmail)
+				memberGroupPostGroups[member.Post.EmailPrefix] = memberGroupPostGroup
+
+				postSuperGroup, exists := superGroupPostGroups[member.Post.EmailPrefix]
+				if !exists {
+					postSuperGroup = model.Group{
+						Email:   strings.ToLower(member.Post.EmailPrefix + "." + superGroup.Name + "@chalmers.it"),
+						Type:    superGroup.Type,
+						Aliases: []string{},
+					}
+				}
+				if !slices.Contains(postSuperGroup.Members, memberGroupPostGroup.Email) {
+					postSuperGroup.Members = append(postSuperGroup.Members, memberGroupPostGroup.Email)
+					superGroupPostGroups[member.Post.EmailPrefix] = postSuperGroup
+				}
+			}
+
+			memberGroup.Members = append(memberGroup.Members, memberEmail)
+		}
+		outerGroup.Members = append(outerGroup.Members, memberGroup.Email)
+		groups = append(groups, memberGroup)
 	}
-	return group
+	for _, postGroup := range superGroupPostGroups {
+		groups = append(groups, postGroup)
+	}
+	groups = append(groups, outerGroup)
+	return groups
 }
 
 func (superGroups AuthSuperGroups) ToGroups() model.Groups {
 	groupsList := model.Groups{}
 	for _, superGroup := range superGroups {
-		groupsList = append(groupsList, superGroup.ToGroup())
+		groupsList = append(groupsList, superGroup.ToGroups()...)
 	}
 	return groupsList
 }
