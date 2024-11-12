@@ -78,6 +78,10 @@ func (superGroup AuthSuperGroup) ToGroups() model.Groups {
 		}
 		memberGroupPostGroups := make(map[string]model.Group)
 
+		if group.Members == nil || len(group.Members) == 0 {
+			continue
+		}
+
 		for _, member := range group.Members {
 
 			var memberEmail string
