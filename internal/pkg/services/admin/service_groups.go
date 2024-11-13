@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/cthit/goldapps/internal/pkg/model"
@@ -28,7 +29,7 @@ func (s googleService) UpdateGroup(groupUpdate model.GroupUpdate) error {
 			}
 		}
 		if !exists {
-			_, err := s.adminService.Members.Insert(groupUpdate.Before.Email, &admin.Member{Email: member}).Do()
+			_, err := s.adminService.Members.Insert(groupUpdate.Before.Email, &admin.Member{Email: strings.ToLower(member)}).Do()
 			if err != nil {
 				fmt.Printf("Failed to add menber %s\n", member)
 				return err
@@ -93,7 +94,7 @@ func (s googleService) UpdateGroup(groupUpdate model.GroupUpdate) error {
 
 func (s googleService) AddGroup(group model.Group) error {
 	newGroup := admin.Group{
-		Email: group.Email,
+		Email: strings.ToLower(group.Email),
 	}
 
 	_, err := s.adminService.Groups.Insert(&newGroup).Do()
@@ -105,7 +106,7 @@ func (s googleService) AddGroup(group model.Group) error {
 
 	// Add members
 	for _, member := range group.Members {
-		_, err := s.adminService.Members.Insert(group.Email, &admin.Member{Email: member}).Do()
+		_, err := s.adminService.Members.Insert(strings.ToLower(group.Email), &admin.Member{Email: strings.ToLower(member)}).Do()
 		if err != nil {
 			return err
 		}
@@ -113,7 +114,7 @@ func (s googleService) AddGroup(group model.Group) error {
 
 	// Add Aliases
 	for _, alias := range group.Aliases {
-		_, err := s.adminService.Groups.Aliases.Insert(group.Email, &admin.Alias{Alias: alias}).Do()
+		_, err := s.adminService.Groups.Aliases.Insert(strings.ToLower(group.Email), &admin.Alias{Alias: alias}).Do()
 		if err != nil {
 			return err
 		}
@@ -197,7 +198,7 @@ func (s googleService) getGoogleGroupMembers(email string) ([]string, error) {
 
 	result := make([]string, len(members.Members))
 	for i, member := range members.Members {
-		result[i] = member.Email
+		result[i] = strings.ToLower(member.Email)
 	}
 
 	return result, nil
